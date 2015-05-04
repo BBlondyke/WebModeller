@@ -20,9 +20,33 @@ var vertTable;
 
 var VERTEX_MAX;
 
-function initBuffers() {
+/*
+ * 
+ *	Triangle
+ * 
+ */
+
+function Triangle() {
+	this.vertexList = [];
+	this.color = Vector4D(1.0, 1.0, 1.0, 1.0);
+	
+	this.normal = function() {
+		var vecA = vertTable[this.vertexList[1]].sub(vertTable[this.vertexList[0]]);
+		var vecB = vertTable[this.vertexList[2]].sub(vertTable[this.vertexList[0]]);
+		var rtn = vecA.crossProduct(vecB);
+		
+		return rtn;
+		
+	}
 	
 }
+
+function Polygon() {
+	this.vertexList = [];
+	this.color = Vector4D(1.0, 1.0, 1.0, 1.0);
+	//TODO MORE POLY SHUTFF MOAR
+}
+
 
 //just a pass through for now.
 window.onload = function init() {
