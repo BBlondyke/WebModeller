@@ -1,11 +1,15 @@
-//Linear Algebra Support Library
-
 /*
- * Linear Support Library:
- * 		Authored by Ryan Connors as a support library of functions for GL applications
- * 
- * 		Free to distribute and modify, no warranty provided.
+<!-- 
+Ryan Connors
+1344722
+rmconnor@ucsc.edu
+P2 : Model and Shading from file.
+-->
+
  */
+ 
+ //linLib is a support library a wrote for assignments like this
+
 
 
 /*
@@ -23,6 +27,14 @@ function Vector(x, y, z) {
 		rtn.y = this.y + vector.y;
 		rtn.z = this.z + vector.z;
 		
+		return rtn;
+	}
+	
+	this.sub = function(vector) {
+		var rtn = new Vector(0.0, 0.0, 0.0);
+		rtn.x = this.x - vector.x;
+		rtn.y = this.y - vector.y;
+		rtn.z = this.z - vector.z;
 		return rtn;
 	}
 	
@@ -54,6 +66,18 @@ function Vector(x, y, z) {
 		return rtn;
 	}
 	
+	this.magnitude = function() {
+		return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2) + Math.pow(this.z, 2));
+	}
+	
+	this.normalize = function () {
+		var rtn = new Vector(this.x, this.y, this.z);
+		
+		rtn = rtn.scalarMult(1/(this.magnitude()));
+		
+		return rtn;
+	}
+	
 	this.copy = function() {
 		var rtn = new Vector(this.x, this.y, this.z);
 		return rtn;
@@ -67,6 +91,37 @@ function Vector(x, y, z) {
 		]);
 	}
 	
+	//normalList is used for determine a vertex normal when treating this as a point
+	this.normalList = [];
+	
+	this.addNormal = function(normalVec) {
+		this.normalList.push(normalVec.copy());
+	}
+	
+	this.avgNorm = function() {
+		if (this.normalList.length == 1) {
+			console.log("Error : Vector.avgNorm called on empty normal list");
+			return undefined;
+		}
+		
+		var basis = this.normalList[0].copy();
+		
+		for ( var index = 1; index < this.normalList.length; ++index) {
+			basis = basis.add(this.normalList[index]);
+		}
+		
+		basis.scale(1/(this.normalList.length));
+		return basis;
+		
+	}
+	
+	this.toFloat32Array = function() {
+		return new Float32Array([
+			this.x,
+			this.y,
+			this.z
+		]);
+	}
 }
 
 /*

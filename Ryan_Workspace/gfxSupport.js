@@ -8,6 +8,13 @@
  * and then perform easy operations prior to setting the gl uniform matrix
  */
 
+function makePerspective(distance) {
+	return [ 1.0, 0.0, 0.0, 0.0,
+			 0.0, 1,0, 0.0, 0.0,
+			 0.0, 0.0, 1.0, distance,
+			 0.0, 0.0, 0.0, 1.0
+	];
+}
 function makeTranslation2D(deltaX, deltaY) {
 	return [
 	1.0, 	0.0, 	0.0,
