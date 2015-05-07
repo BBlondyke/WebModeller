@@ -12,7 +12,7 @@
 
 /**
  * 
- * @param {number} w: Width of Cube
+ * @param {number} width: Width of Cube
  */
 function Cube(width) {}
 
@@ -59,4 +59,25 @@ function Pyramid(width, height) {}
  * @param {number} majorRes: Number of geometrical figures used to generate Toroid
  * @param {number} minorRes: Number of verts used in geometrical figures
  */
-function Toroid(majorRad, minorRad, majorRes, minorRes) {}
+function Toroid(majorRad, minorRad, majorRes, minorRes) {
+	var majorAngle = 360/majorRes;
+	var minorAngle = 360/minorRes;
+	
+	/* 
+	 * Make a majorRes x 1 two-dimensional array.
+	 * Make one point on x-axis minorRad away from origin, pushing a copy of it
+	 *    into each inner array.
+	 * Make minorRes - 1 more points rotated (about y-axis) by minorAngle degrees
+	 *    from the previous one, pushing a copy of each successive one into each
+	 *    inner array.
+	 * We now have majorRes identical planar polys.
+	 * 
+	 * Now, for each poly in the array:
+	 *    Translate each vertex along the x-axis by majorRad.
+	 *    Rotate each vertex (about z-axis) by (majorAngle degrees) x (the index
+	 * 	     of the poly).
+	 * We now have a ring of polys, a.k.a. a Toroid.
+	 * 
+	 * All that remains un-done is connecting the verts.
+	 */
+}

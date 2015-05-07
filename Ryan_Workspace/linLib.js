@@ -8,7 +8,7 @@ P2 : Model and Shading from file.
 
  */
  
- //linLib is a support library a wrote for assignments like this
+ //linLib is a support library I wrote for assignments like this
 
 
 
