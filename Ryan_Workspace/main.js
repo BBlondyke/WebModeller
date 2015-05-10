@@ -16,6 +16,7 @@ var nBuffer;
 
 //global tables
 var vertTable;
+var currentColorID;
 
 
 var VERTEX_MAX;
@@ -30,6 +31,9 @@ function Triangle() {
 	this.vertexList = [];
 	this.color = Vector4D(1.0, 1.0, 1.0, 1.0);
 	
+	//container class link
+	this.parentPoly;
+	
 	this.normal = function() {
 		var vecA = vertTable[this.vertexList[1]].sub(vertTable[this.vertexList[0]]);
 		var vecB = vertTable[this.vertexList[2]].sub(vertTable[this.vertexList[0]]);
@@ -39,12 +43,32 @@ function Triangle() {
 		
 	}
 	
+	
 }
+
 
 function Polygon() {
 	this.vertexList = [];
+	this.triTable = [];
+	
 	this.color = Vector4D(1.0, 1.0, 1.0, 1.0);
-	//TODO MORE POLY SHUTFF MOAR
+	this.materialColor;
+	
+	this.parentMesh;
+	
+	this.normal = function() {
+		//returns normal of polygon
+	}
+	
+	
+}
+
+function Mesh() {
+	this.vertTable = [];
+	this.polyTable = [];
+	
+	this.colorID;
+	this.materialColor;
 }
 
 
