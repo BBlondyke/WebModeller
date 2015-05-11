@@ -10,7 +10,7 @@
  */
 
 //XX
-//for now let assume all primitives are created centric to the origin. We can just translate the coordiantes
+//for now let assume all primitives are created centric to the origin. We can just translate the coordinates
 //later with matrix operations if we don't want it.
 //XX
 
@@ -114,7 +114,7 @@ function Sphere(radius) {
 		
 	}
 	
-	//still need polys, think efficienctly
+	//still need polys, think efficiently
 	
 	
 	return returnMesh;
@@ -125,12 +125,38 @@ function Sphere(radius) {
 //r2? Perhaps number of faces as well?
 /**
  * 
- * @param {number} botRad:   Radius of Cylinder's bottom base
- * @param {number} topRad:   Radius of Cylinder's top base
+ * @param {number} radius:   Radius of Cylinder's base
  * @param {number} height:   Height of Cylinder
  * @param {number} numFaces: Number of faces around Cylinder
  */
-function Cylinder(botRad, topRad, height, numFaces) {}
+function Cylinder(radius, height, numFaces) {
+	var returnMesh = new Mesh();
+	var theta = 360/(numFaces - 1) * Math.PI/180;
+	
+	for(var numVert = 0; numVert < numFaces - 1; ++numVert){
+		var x = Math.cos(theta * numVert);
+		var y = Math.sin(theta * numVert);
+		
+		returnMesh.vertTable.push(new Vector(x, y, height/2));
+		returnMesh.vertTable.push(new Vector(x, y, height/-2));
+	}
+	
+	//find loopable polys
+	for(var numPoly = 0; numPoly < numFaces - 1; ++numPoly){
+		var newPoly = new Polygon();
+		newPoly.vertList = [numPoly * 4, numPoly*4 + 1, numPoly*4 + 3, numPoly*4 + 2];
+		
+		returnMesh.polyTable.push(newPoly);
+	}
+	
+	//find extraneous unloopable poly
+	var newPoly = new Polygon();
+	newPoly.vertList = [returnMesh.vertTable.length - 2, returnMesh.vertTable.length - 1, 1, 0];
+	
+	returnMesh.polyTable.push(newPoly);
+	
+	return returnMesh;
+}
 /*
  * 
  * NOTE : we can just use the same idea as the sphere above, generate one circle using trig and then just
@@ -139,13 +165,43 @@ function Cylinder(botRad, topRad, height, numFaces) {}
  * 
  * 
  */
+
 //Instead of separate primitive, make into special case of Cylinder with r2 = 0?
 /**
  * 
  * @param {number} radius: Radius of Cone's base
  * @param {number} height: Height of Cone
+ * @param {number} numFaces: Number of faces around the Cone
  */
-function Cone(radius, height) {}
+function Cone(radius, height) {
+	var returnMesh = new Mesh();
+	var theta = 360/(numFaces - 1) * Math.PI/180;
+	
+	returnMesh.vertTable.push(new Vector(0, 0, height/2));
+	
+	for(var numVert = 0; numVert < numFaces - 1; ++numVert){
+		var x = Math.cos(theta * numVert);
+		var y = Math.sin(theta * numVert);
+		
+		returnMesh.vertTable.push(new Vector(x, y, height/-2));
+	}
+	
+	//find loopable polys
+	for(var numPoly = 1; numPoly < numFaces; ++numPoly){
+		var newPoly = new Polygon();
+		newPoly.vertList = [0, numPoly, numPoly + 1];
+		
+		returnMesh.polyTable.push(newPoly);
+	}
+	
+	//find extraneous unloopable poly
+	var newPoly = new Polygon();
+	newPoly.vertList = [0, numFaces - 1, 1];
+	
+	returnMesh.polyTable.push(newPoly);
+	
+	return returnMesh;
+}
 
 //Length too?
 //If no length, instead of separate primitive, make into special case of Cylinder
@@ -199,24 +255,76 @@ function Pyramid(width, height) {
  * @param {number} minorRes: Number of verts used in geometrical figures
  */
 function Toroid(majorRad, minorRad, majorRes, minorRes) {
-	var majorAngle = 360/majorRes;
-	var minorAngle = 360/minorRes;
+	var returnMesh = new Mesh();
+	var majorAngle = 360.0/majorRes * Math.PI/180.0;
+	var minorAngle = 360.0/minorRes * Math.PI/180.0;
 	
-	/* 
-	 * Make a majorRes x 1 two-dimensional array.
-	 * Make one point on x-axis minorRad away from origin, pushing a copy of it
-	 *    into each inner array.
-	 * Make minorRes - 1 more points rotated (about y-axis) by minorAngle degrees
-	 *    from the previous one, pushing a copy of each successive one into each
-	 *    inner array.
-	 * We now have majorRes identical planar polys.
-	 * 
-	 * Now, for each poly in the array:
-	 *    Translate each vertex along the x-axis by majorRad.
-	 *    Rotate each vertex (about z-axis) by (majorAngle degrees) x (the index
-	 * 	     of the poly).
-	 * We now have a ring of polys, a.k.a. a Toroid.
-	 * 
-	 * All that remains un-done is connecting the verts.
+	/*
+	 * populate vertTable
 	 */
+	for (var majorVert = 0; majorVert < majorRes; ++majorVert) {
+		
+		var sinMajor = Math.sin(majorVert * majorAngle);
+		var cosMajor = Math.cos(majorVert * majorAngle);
+		
+		for (var minorVert = 0; minorVert < minorRes; ++minorVert) {
+			var sinMinor = Math.sin(minorVert * minorAngle);
+			var cosMinor = Math.cos(minorVert * minorAngle);
+			
+			var x = cosMinor + majorRad*cosMajor;
+			var y = sinMinor + majorRad*sinMajor;
+			var z = sinMinor;
+			
+			var thisVert = new Vector(x, y, z);
+			
+			returnMesh.vertTable.push(thisVert);
+		}
+	}
+	
+	/*
+	 * populate polyTable
+	 */
+	for(var numMajor = 0; numMajor < majorRes - 1; ++numMajor){
+		//find loopable sets of polys
+		for(var numMinor = 0; numMinor < minorRes - 1; ++numMinor){
+			var newPoly = new Polygon();
+			newPoly.vertList = [numMajor*minorRes + numMinor,
+								numMajor*minorRes + numMinor + 1],
+								numMajor*minorRes + numMinor + minorRes + 1,
+								numMajor*minorRes + numMinor + minorRes];
+			
+			returnMesh.polyTable.push(newPoly);
+		}
+		
+		//find extraneous non-loopable set of polys
+		var newPoly = new Polygon();
+		newPoly.vertList = [(numMajor+1)*minorRes - 1,
+							numMajor*minorRes,
+							(numMajor+1)*minorRes,
+							(numMajor+1)*minorRes - 1];
+		
+		returnMesh.polyTable.push(newPoly);
+	}
+	
+	//find loopable extraneous set of polys
+	for(var numMinor = 0; numMinor < minorRes - 1; ++numMinor){
+		var newPoly = new Polygon();
+		newPoly.vertList = [returnMesh.vertTable.length - majorRes + numMinor,
+							returnMesh.vertTable.length - majorRes + numMinor + 1,
+							numMinor + 1,
+							numMinor];
+		
+		returnMesh.polyTable.push(newPoly);
+	}
+	
+	//find doubly extraneous poly
+	var newPoly = new Polygon();
+	newPoly.vertList = [returnMesh.vertTable.length - 1,
+						returnMesh.vertTable.length - minorRes,
+						0,
+						minorRes - 1];
+	
+	returnMesh.polyTable.push(newPoly);
+	
+	return returnMesh;
 }
