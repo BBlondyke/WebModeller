@@ -187,10 +187,46 @@ function makeTranslation3D(deltaX, deltaY, deltaZ) {
 	];
 }
 
+function makeCube(width) {
+	
+	var basis = [-width/2.0, -width/2.0, -width/2.0];
+	var lowB = [basis[0], basis[1] + width, basis[2] ];
+	var lowC = [basis[0] + width, basis[1] + width, basis[2]];
+	var lowD = [basis[0] + width, basis[1], basis[2]];
+	
+	var upperBasis = [basis[0], basis[1], basis[2] + width];
+	var upB = [upperBasis[0], upperBasis[1] + width, upperBasis[2] ];
+	var upC = [upperBasis[0] + width, upperBasis[1] + width, upperBasis[2]];
+	var upD = [upperBasis[0] + width, upperBasis[1], upperBasis[2]];	
+	
+	var vertexList = [[], basis, lowB, lowC, lowD, upperBasis, upB, upC, upD];
+	
+	
+	var topFace = ["top", 5, 6, 7, 8];
+	var btmFace = ["bottom", 1, 2, 3, 4];
+	var fFace   = ["front", 2, 3, 7, 6];
+	var bFace   = ["back", 1, 5, 8, 4];
+	var lsFace  = ["left", 1, 2, 6, 5];
+	var rsFace  = ["right", 3, 7, 8, 4];
+	
+	
+	/*
+	var topFace = ["top", 8, 7, 6, 5];
+	var btmFace = ["bottom", 4, 3, 2, 1];
+	var fFace   = ["front", 6, 7, 3, 2];
+	var bFace   = ["back", 4, 8, 5, 1];
+	var lsFace  = ["left", 5, 6, 2, 1];
+	var rsFace  = ["right", 4, 8, 7, 3];
+	*/
+	
+	var polyList = [[], topFace, btmFace, fFace, bFace, lsFace, rsFace ];
+	return [vertexList, polyList];
+}
+
 function makeSphere(radius) {
 	//current lat/long bands hard coded but could be supplied as argument
 	var vertexList = [[]];
-	var polyList = [];
+	var polyList = [[]];
 	
 	var latBands = 30;
 	var longBands = 30;
@@ -1038,44 +1074,13 @@ vShader = [
 	gl.uniform4fv(gl.getUniformLocation(program, "lightPosition"), lightSource.toFloat32Array());
 	
 	
-	/*
-																										//TDD stuff
-	var testColor = new Vector4D(1.0, 0.0, 0.0, 1.0);
-	var test = new Mesh(testColor, currentVBuffInd);
-	
-	//populate all data
-	test.parseData(SHARK_COORD, SHARK_POLY);
-	test.endBufInd = test.startBufInd + 12 * (3 * test.triTable.length);
-	
-	testColor = new Vector4D(0.0, 1.0, 0.0, 1.0);
-	currentVBuffInd += 12 * (3 * test.triTable.length) + 1;
-	
-	var testB = new Mesh(testColor, currentVBuffInd);
-	testB.parseData(SHARK_COORD, SHARK_POLY);
-	testB.endBufInd = testB.startBufInd + 12 * (3 * test.triTable.length);
-	currentVBuffInd = testB.endBufInd + 1;
-																										//END TDD STUFF
-	*/
-	
 	initBuffers(12 * MAX_VERT_COUNT);
 	//render a blank screen to prepare for generation
 	gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
+	/*
 	addMesh(SHARK_COORD, SHARK_POLY);
-	//addMesh(SHARK_COORD, SHARK_POLY);
-	//test.pushBuffer();
-	//testB.pushBuffer();
-	
-	
-	//testB.materialColor = new Vector4D(0.3, 0.3, 0.7, 1.0);
-	
-	//scale and set initial conditions
-	
-	//var sX = (2.0)/(meshTable[1].maxX - meshTable[1].minX);
-	//var sY = (1.0)/(meshTable[1].maxY - meshTable[1].minY);
-	//var sZ = (1.2)/(meshTable[1].maxZ - meshTable[1].minZ);
-	//test.scale(sX, sY, sZ);
-	//meshTable[1].scale(0.5 * sX, 0.5 *sY, 0.5*sZ);
+
 	
 	meshTable[0].rotateX(3.141);
 	meshTable[0].rotateY(1.57);
@@ -1083,17 +1088,17 @@ vShader = [
 	meshTable[0].translate(-0.5, -0.5, -0.5);
 	
 	meshTable[0].setStartState();
-	//meshTable[1].setStartState();
+	*/
+	//XX START HERE ADD CUBE
 	
-	var sphereData = makeSphere(1);
-	addMesh(sphereData[0], sphereData[1]);
-	//meshTable[1].setStartState();
-	
-	
-	//meshTable.push(test);
-	//meshTable.push(testB);
-	
-	//render
+	//use makecube to generate two arrays
+	//the first is the array of vertices
+	//the second is the array of polys
+	var cube = makeCube(1);
+	addMesh(cube[0], cube[1]);
+	meshTable[0].materialColor = new Vector4D(0.5, 0.5, 0.0, 1.0);
+	meshTable[0].scale(0.3, 0.3, 0.3);
+
 	renderAll();
 		
 	
