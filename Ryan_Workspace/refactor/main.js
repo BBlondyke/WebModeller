@@ -187,6 +187,51 @@ function makeTranslation3D(deltaX, deltaY, deltaZ) {
 	];
 }
 
+function makeSphere(radius) {
+	//current lat/long bands hard coded but could be supplied as argument
+	var vertexList = [[]];
+	var polyList = [];
+	
+	var latBands = 30;
+	var longBands = 30;
+	
+	//generate verts
+	for(var thisLat = 0; thisLat <= latBands; ++thisLat ) {
+		var alpha = thisLat * (Math.PI / latBands);
+		var sAlpha = Math.sin(alpha);
+		var cAlpha = Math.cos(alpha);
+		
+		for(var thisLong = 0; thisLong <= longBands; ++thisLong) {
+			var beta = thisLong * (2*Math.PI /longBands);
+			var sBeta = Math.sin(beta);
+			var cBeta = Math.cos(beta);
+			
+			//generate vertex
+			var temp = [];
+			temp.push(radius * (cBeta * sAlpha));
+			temp.push(radius * cAlpha);
+			temp.push(radius * (sBeta * sAlpha));
+			vertexList.push( temp );	
+			
+		}
+	}
+	
+	//stitch them together into polys
+	for(var thisLat = 0; thisLat < latBands; ++thisLat) {
+		for(var thisLong = 0; thisLong < longBands; ++thisLong) {
+			
+			var topLeft = (thisLat * (longBands + 1)) + thisLong + 1;
+			var btmLeft = topLeft + longBands + 2;
+			
+			var thisPoly = ["sphere", topLeft, btmLeft, btmLeft+1, topLeft+1];
+			polyList.push(thisPoly);
+		}
+	}
+	
+	return [vertexList, polyList];
+	
+}
+
 //update framebuffer data
 function  updatePixelData() {
 	arraySize = canvas.width * canvas.height * 32;
@@ -1017,7 +1062,7 @@ vShader = [
 	gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
 	addMesh(SHARK_COORD, SHARK_POLY);
-	addMesh(SHARK_COORD, SHARK_POLY);
+	//addMesh(SHARK_COORD, SHARK_POLY);
 	//test.pushBuffer();
 	//testB.pushBuffer();
 	
@@ -1026,11 +1071,11 @@ vShader = [
 	
 	//scale and set initial conditions
 	
-	var sX = (2.0)/(meshTable[1].maxX - meshTable[1].minX);
-	var sY = (1.0)/(meshTable[1].maxY - meshTable[1].minY);
-	var sZ = (1.2)/(meshTable[1].maxZ - meshTable[1].minZ);
+	//var sX = (2.0)/(meshTable[1].maxX - meshTable[1].minX);
+	//var sY = (1.0)/(meshTable[1].maxY - meshTable[1].minY);
+	//var sZ = (1.2)/(meshTable[1].maxZ - meshTable[1].minZ);
 	//test.scale(sX, sY, sZ);
-	meshTable[1].scale(0.5 * sX, 0.5 *sY, 0.5*sZ);
+	//meshTable[1].scale(0.5 * sX, 0.5 *sY, 0.5*sZ);
 	
 	meshTable[0].rotateX(3.141);
 	meshTable[0].rotateY(1.57);
@@ -1038,7 +1083,12 @@ vShader = [
 	meshTable[0].translate(-0.5, -0.5, -0.5);
 	
 	meshTable[0].setStartState();
-	meshTable[1].setStartState();
+	//meshTable[1].setStartState();
+	
+	var sphereData = makeSphere(1);
+	addMesh(sphereData[0], sphereData[1]);
+	//meshTable[1].setStartState();
+	
 	
 	//meshTable.push(test);
 	//meshTable.push(testB);
