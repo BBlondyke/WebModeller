@@ -51,6 +51,11 @@ var qDown;
 var wDown;
 var eDown;
 
+//Enumeration for shading types
+var ShaderTypes = {
+	FLAT : 0,
+	SMOOTH : 1,
+}
 
 
 //Shader Support Functions
@@ -429,7 +434,7 @@ function Mesh(colorID, begInd) {
 	this.startBufInd = begInd;
 	this.endBufInd;
 	this.vertCount;
-	
+	this.shading = ShaderTypes.FLAT;
 		
 	this.scaleMat = new Matrix4D(); 
 	this.scaleMat.populateFromArray([ 1.0, 0.0, 0.0, 0.0,
@@ -536,12 +541,20 @@ function Mesh(colorID, begInd) {
 			gl.bufferSubData(gl.ARRAY_BUFFER, (12 * ((3 * index) + 2)) + this.startBufInd, this.vertTable[this.triTable[index].vertList[2]].toFloat32Array());
 			
 			gl.bindBuffer(gl.ARRAY_BUFFER, nBuffer);
-		
-			gl.bufferSubData(gl.ARRAY_BUFFER, (12 * (3 * index)), this.vertTable[this.triTable[index].vertList[0]].avgNorm().toFloat32Array())
-			gl.bufferSubData(gl.ARRAY_BUFFER, (12 * (3 * index + 1)) + this.startBufInd, this.vertTable[this.triTable[index].vertList[1]].avgNorm().toFloat32Array())
-			gl.bufferSubData(gl.ARRAY_BUFFER, (12 * (3 * index + 2)) + this.startBufInd, this.vertTable[this.triTable[index].vertList[2]].avgNorm().toFloat32Array())
+			
+			if(this.shading == ShaderTypes.SMOOTH) {
+				gl.bufferSubData(gl.ARRAY_BUFFER, (12 * (3 * index)) + this.startBufInd, this.vertTable[this.triTable[index].vertList[0]].avgNorm().toFloat32Array())
+				gl.bufferSubData(gl.ARRAY_BUFFER, (12 * (3 * index + 1)) + this.startBufInd, this.vertTable[this.triTable[index].vertList[1]].avgNorm().toFloat32Array())
+				gl.bufferSubData(gl.ARRAY_BUFFER, (12 * (3 * index + 2)) + this.startBufInd, this.vertTable[this.triTable[index].vertList[2]].avgNorm().toFloat32Array())
+			}
+			else if (this.shading == ShaderTypes.FLAT){
+			//use triangle normal instead
+				gl.bufferSubData(gl.ARRAY_BUFFER, 12 * (3 * index) + this.startBufInd, this.triTable[index].calculateNormal().toFloat32Array());
+				gl.bufferSubData(gl.ARRAY_BUFFER, 12 * (3 * index + 1) + this.startBufInd, this.triTable[index].calculateNormal().toFloat32Array());
+				gl.bufferSubData(gl.ARRAY_BUFFER, 12 * (3 * index + 2) + this.startBufInd, this.triTable[index].calculateNormal().toFloat32Array());
+			}
 		}
-		
+		console.log("------")
 	}
 	
 	this.tesselate = function() {
@@ -707,8 +720,9 @@ function Mesh(colorID, begInd) {
 		gl.uniformMatrix4fv(pMat, false, perspMat.toFloat32Array());
 		projectionMatric = pMat;
 		
-		//now draw the mesh
-		gl.drawArrays(gl.TRIANGLES, this.startInd, this.triTable.length * 3);
+		var startIndex = Math.floor(this.startBufInd/12.0);
+		
+		gl.drawArrays(gl.TRIANGLES, startIndex, 3 * this.triTable.length);
 		
 	}
 }
@@ -736,12 +750,13 @@ function renderAll() {
 	}
 	
 	updatePixelData();
+	
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
 	for (var index = 0; index < meshTable.length; ++index) {
 		meshTable[index].render(false)
 	}
-
+	
 }
 
 //set mouse events
@@ -887,7 +902,7 @@ function addMesh(cArray, pArray) {
 	temp.scale(sX, sY, sZ);
 	
 	temp.endBufInd = temp.startBufInd + 12 * (3 * temp.triTable.length);
-	currentVBuffInd = temp.endBufInd + 1;
+	currentVBuffInd = temp.endBufInd;
 	
 	meshTable.push(temp);
 	
@@ -917,7 +932,18 @@ window.addEventListener("keydown", function(event) {
 		eDown = true;
 	}
 	else if (event.keyCode == 78) {
-		addMesh(SHARK_COORD, SHARK_POLY);
+		var thisIndex = meshTable.length;
+		var cube = makeCube(1.0);
+		addMesh(cube[0], cube[1]);
+		meshTable[thisIndex].scale(0.3, 0.3, 0.3);
+		renderAll();
+	}
+	else if (event.keyCode == 77) {
+		var thisIndex = meshTable.length;
+		var pyramid = makePyramid(1.0, 1.0);
+		addMesh(pyramid[0], pyramid[1]);
+		meshTable[thisIndex].scale(0.3, 0.3, 0.3);
+		renderAll();
 	}
 	
 }, false);
@@ -1071,7 +1097,7 @@ vShader = [
 	gl.viewport(0, 0, canvas.width, canvas.height);
 	
 	//set the clear bit
-	gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+	gl.clearColor( 0.1, 0.1, 0.1, 1.0 );
 	gl.clearDepth(0.0);
 	gl.depthFunc(gl.GREATER);
 	
@@ -1080,7 +1106,7 @@ vShader = [
 	gl.useProgram( program );
 	
 	//set light position
-	var lightSource = new Vector4D(1.0, 1.0, 1.0, 0.0);
+	var lightSource = new Vector4D(0.0, 0.0, -10.0, 0.0);
 	gl.uniform4fv(gl.getUniformLocation(program, "lightPosition"), lightSource.toFloat32Array());
 	
 	
@@ -1088,7 +1114,7 @@ vShader = [
 	//render a blank screen to prepare for generation
 	gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
-	
+	/*
 	addMesh(SHARK_COORD, SHARK_POLY);
 
 	
@@ -1098,6 +1124,8 @@ vShader = [
 	meshTable[0].translate(-0.5, -0.5, -0.5);
 	
 	meshTable[0].setStartState();
+	*/
+	
 	
 	//XX START HERE ADD CUBE
 	
@@ -1105,24 +1133,32 @@ vShader = [
 	//the first is the array of vertices
 	//the second is the array of polys
 	
-	/*
+	
 	var cube = makeCube(1.0);
 	var pyramid = makePyramid(1.0, 1.0);
+	var sphere = makeSphere(1.0);
+	
+	addMesh(cube[0], cube[1]);
+	
+	meshTable[0].materialColor = new Vector4D(0.9, 0.9, 0.9, 1.0);
+	meshTable[0].scale(0.3, 0.3, 0.3);
+	
+	
 	addMesh(pyramid[0], pyramid[1]);
 	
-	meshTable[0].materialColor = new Vector4D(0.5, 0.5, 0.0, 1.0);
-	meshTable[0].scale(0.3, 0.3, 0.3);
-	addMesh(cube[0], cube[1]);
-	meshTable[1].materialColor = new Vector4D(0.5, 0.0, 0.0, 1.0);
-	meshTable[1].scale(0.2, 0.2, 0.2);
-	meshTable[1].translate(0.3, 0, 0);
-	*/
+	meshTable[1].materialColor = new Vector4D(0.9, 0.9, 0.9, 1.0);
+	meshTable[1].rotateX(-Math.PI/2.0);
+	meshTable[1].rotateY(-Math.PI/2.0);
+	meshTable[1].scale(0.3, 0.3, 0.3);
+	meshTable[1].translate(-0.5, 0.0, 0.0);
+	
 	/*
-	addMesh(pyramid[0], pyramid[1]);
-	meshTable[2].materialColor = new Vector4D(0.0, 0.0, 0.4, 1.0);
+	addMesh(sphere[0], sphere[1]);
+	meshTable[2].materialColor = new Vector4D(0.9, 0.9, 0.9, 1.0);
 	meshTable[2].scale(0.3, 0.3, 0.3);
-	meshTable[2].translate(-0.3, 0, 0);
+	meshTable[2].translate(-0.2, 0.0, 0.0);
 	*/
+	
 	renderAll();
 		
 	
