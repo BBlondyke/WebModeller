@@ -203,23 +203,33 @@ function makeCube(width) {
 	
 	
 	var topFace = ["top", 5, 6, 7, 8];
-	var btmFace = ["bottom", 1, 2, 3, 4];
+	var btmFace = ["bottom", 1, 4, 3, 2];
 	var fFace   = ["front", 2, 3, 7, 6];
 	var bFace   = ["back", 1, 5, 8, 4];
 	var lsFace  = ["left", 1, 2, 6, 5];
-	var rsFace  = ["right", 3, 7, 8, 4];
-	
-	
-	/*
-	var topFace = ["top", 8, 7, 6, 5];
-	var btmFace = ["bottom", 4, 3, 2, 1];
-	var fFace   = ["front", 6, 7, 3, 2];
-	var bFace   = ["back", 4, 8, 5, 1];
-	var lsFace  = ["left", 5, 6, 2, 1];
-	var rsFace  = ["right", 4, 8, 7, 3];
-	*/
+	var rsFace  = ["right", 3, 4, 8, 7];
 	
 	var polyList = [[], topFace, btmFace, fFace, bFace, lsFace, rsFace ];
+	return [vertexList, polyList];
+}
+
+function makePyramid(width, height) {
+	var basis = [-width/2.0, -width/2.0, -height/2.0];
+	var lowB = [basis[0], basis[1] + width, basis[2] ];
+	var lowC = [basis[0] + width, basis[1] + width, basis[2]];
+	var lowD = [basis[0] + width, basis[1], basis[2]];
+	var top   = [0, 0, height/2.0];
+	
+	var vertexList = [[], basis, lowB, lowC, lowD, top];
+	
+	var btmFace = ["bottom", 1, 4, 3, 2];
+	var fFace = ["front", 2, 3, 5];
+	var bFace = ["back", 1, 5, 4];
+	var lsFace = ["left", 1, 2, 5];
+	var rsFace = ["right", 3, 4, 5];
+	
+	var polyList = [[], btmFace, fFace, bFace, lsFace, rsFace];
+	
 	return [vertexList, polyList];
 }
 
@@ -1078,7 +1088,7 @@ vShader = [
 	//render a blank screen to prepare for generation
 	gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
-	/*
+	
 	addMesh(SHARK_COORD, SHARK_POLY);
 
 	
@@ -1088,17 +1098,31 @@ vShader = [
 	meshTable[0].translate(-0.5, -0.5, -0.5);
 	
 	meshTable[0].setStartState();
-	*/
+	
 	//XX START HERE ADD CUBE
 	
 	//use makecube to generate two arrays
 	//the first is the array of vertices
 	//the second is the array of polys
-	var cube = makeCube(1);
-	addMesh(cube[0], cube[1]);
+	
+	/*
+	var cube = makeCube(1.0);
+	var pyramid = makePyramid(1.0, 1.0);
+	addMesh(pyramid[0], pyramid[1]);
+	
 	meshTable[0].materialColor = new Vector4D(0.5, 0.5, 0.0, 1.0);
 	meshTable[0].scale(0.3, 0.3, 0.3);
-
+	addMesh(cube[0], cube[1]);
+	meshTable[1].materialColor = new Vector4D(0.5, 0.0, 0.0, 1.0);
+	meshTable[1].scale(0.2, 0.2, 0.2);
+	meshTable[1].translate(0.3, 0, 0);
+	*/
+	/*
+	addMesh(pyramid[0], pyramid[1]);
+	meshTable[2].materialColor = new Vector4D(0.0, 0.0, 0.4, 1.0);
+	meshTable[2].scale(0.3, 0.3, 0.3);
+	meshTable[2].translate(-0.3, 0, 0);
+	*/
 	renderAll();
 		
 	
