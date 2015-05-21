@@ -239,14 +239,14 @@ function makePyramid(width, height) {
 	return [vertexList, polyList];
 }
 
+
 function makeSphere(radius) {
 	//current lat/long bands hard coded but could be supplied as argument
-	var vertexList = [[]];
-	var polyList = [[]];
-	
-	var latBands = 30;
-	var longBands = 30;
-	
+	var vertexList = [];
+	var polyList = [];
+	var latBands = 10;
+	var longBands = 10;
+
 	//generate verts
 	for(var thisLat = 0; thisLat <= latBands; ++thisLat ) {
 		var alpha = thisLat * (Math.PI / latBands);
@@ -272,11 +272,22 @@ function makeSphere(radius) {
 	for(var thisLat = 0; thisLat < latBands; ++thisLat) {
 		for(var thisLong = 0; thisLong < longBands; ++thisLong) {
 			
-			var topLeft = (thisLat * (longBands + 1)) + thisLong + 1;
-			var btmLeft = topLeft + longBands + 2;
+			
+			var topLeft = (thisLat * (longBands + 1)) + thisLong;
+			var btmLeft = topLeft + longBands + 1;
 			
 			var thisPoly = ["sphere", topLeft, btmLeft, btmLeft+1, topLeft+1];
 			polyList.push(thisPoly);
+			
+		}
+	}
+	
+	//adjust data for application expected input.
+	vertexList.unshift([]);
+	
+	for (var pIndex = 0; pIndex < polyList.length; ++pIndex) {
+		for (var kIndex = 1; kIndex < polyList[pIndex].length; ++kIndex) {
+			polyList[pIndex][kIndex] += 1;
 		}
 	}
 	
@@ -1332,7 +1343,8 @@ vShader = [
 	
 	meshTable[0].materialColor = new Vector4D(0.9, 0.9, 0.9, 1.0);
 	meshTable[0].scale(0.3, 0.3, 0.3);
-	
+	meshTable[0].shading = ShaderTypes.SMOOTH;
+	meshTable[0].pushBuffer();
 	
 	addMesh(pyramid[0], pyramid[1]);
 	
@@ -1342,17 +1354,40 @@ vShader = [
 	meshTable[1].scale(0.3, 0.3, 0.3);
 	meshTable[1].translate(-0.5, 0.0, 0.0);
 	
-	/*
+	
 	addMesh(sphere[0], sphere[1]);
-	meshTable[2].materialColor = new Vector4D(0.9, 0.9, 0.9, 1.0);
+	meshTable[2].materialColor = new Vector4D(0.9, 0.0, 0.0, 1.0);
 	meshTable[2].scale(0.3, 0.3, 0.3);
-	meshTable[2].translate(-0.2, 0.0, 0.0);
-	*/
+	meshTable[2].translate(0.5, 0.0, 0.0);
+	
 	
 	addMesh(toroid[0], toroid[1]);
 	
-	meshTable[2].materialColor = new Vector4D(0.9, 0.9, 0.9, 1.0);
-	meshTable[2].scale(0.3, 0.3, 0.3);
+	meshTable[3].materialColor = new Vector4D(0.9, 0.9, 0.9, 1.0);
+	meshTable[3].scale(0.3, 0.3, 0.3);
+	meshTable[3].translate(0.0, 0.6, 0.0);
+	
+	addMesh(cone[0], cone[1]);
+	meshTable[4].materialColor = new Vector4D(0.0, 1.0, 0.0, 0.0);
+	meshTable[4].scale(0.3, 0.3, 0.3);
+	meshTable[4].translate(0.0, -0.5, 0.0);
+	
+	addMesh(cone[0], cone[1]);
+	meshTable[5].materialColor = new Vector4D(0.0, 1.0, 0.0, 0.0);
+	meshTable[5].scale(0.3, 0.3, 0.3);
+	meshTable[5].translate(-0.5, -0.5, 0.0);
+	meshTable[5].shading = ShaderTypes.SMOOTH;
+	meshTable[5].pushBuffer();
+	
+	addMesh(cube[0], cube[1]);
+	meshTable[6].materialColor = new Vector4D(0.0, 0.0, 1.0, 1.0);
+	meshTable[6].scale(0.3, 0.3, 0.3);
+	meshTable[6].translate(0.5, -0.5, 0.0);
+	
+	for (var mIndex = 0; mIndex < meshTable.length; ++mIndex) {
+		meshTable[mIndex].setStartState();
+	}
+	
 	
 	renderAll();
 		
@@ -1393,6 +1428,7 @@ vShader = [
 			tempCol.scale(255.0);
 			tempCol.floor();
 			console.log(tempCol);
+			
 			if(thisColor.equals(tempCol)) {
 				currentPick = meshTable[mshIndex];
 				return;
@@ -1400,17 +1436,7 @@ vShader = [
 		}
 		
 		currentPick = undefined;
-		/*
-		if (pixelData[4*index + 1] == 255) {
-			currentPick = meshTable[1];
-		}
-		else if (pixelData[4*index] == 255) {
-			currentPick = meshTable[0]
-		}
-		else {
-			currentPick = undefined;
-		}
-		*/
+
 		
 	});
 	
