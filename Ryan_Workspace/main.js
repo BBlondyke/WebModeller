@@ -45,6 +45,7 @@ var mousePos;
 var initialMousePos;
 var initialPixel;
 var resolvingEvent;
+var isWire = false;
 var zDown;
 var sDown;
 var qDown;
@@ -711,7 +712,7 @@ function Mesh(colorID, begInd) {
 				gl.bufferSubData(gl.ARRAY_BUFFER, 12 * (3 * index + 2) + this.startBufInd, this.triTable[index].calculateNormal().toFloat32Array());
 			}
 		}
-		console.log("------")
+		
 	}
 	
 	this.tesselate = function() {
@@ -879,7 +880,12 @@ function Mesh(colorID, begInd) {
 		
 		var startIndex = Math.floor(this.startBufInd/12.0);
 		
-		gl.drawArrays(gl.TRIANGLES, startIndex, 3 * this.triTable.length);
+		if (!isWire) {
+			gl.drawArrays(gl.TRIANGLES, startIndex, 3 * this.triTable.length);
+		}
+		else {
+			gl.drawArrays(gl.LINE_LOOP, startIndex, 3 * this.triTable.length);
+		}
 		
 	}
 }
@@ -1102,6 +1108,18 @@ window.addEventListener("keydown", function(event) {
 		meshTable[thisIndex].scale(0.3, 0.3, 0.3);
 		renderAll();
 	}
+	else if (event.keyCode == 66) {
+		var thisIndex = meshTable.length;
+		addMesh(SHARK_COORD, SHARK_POLY);
+		meshTable[thisIndex].scale(0.001, 0.001, 0.001);
+		meshTable[thisIndex].materialColor = new Vector4D(0.3, 0.3, 0.3, 1.0);
+		meshTable[thisIndex].shading = ShaderTypes.SMOOTH;
+		renderAll();
+	}
+	else if (event.keyCode == 191) {
+		isWire = !isWire;
+		renderAll();
+	}
 	
 }, false);
 
@@ -1152,6 +1170,18 @@ function rotateX() {
 
 //ONLOAD
 window.onload = function() {
+	for(var sIndex = 0; sIndex < SHARK_POLY.length; ++sIndex) {
+		if(SHARK_POLY[sIndex].length == 0) {
+				continue;
+		}
+		
+		var temp = SHARK_POLY[sIndex][0]
+		SHARK_POLY[sIndex].reverse();
+		SHARK_POLY[sIndex].pop();
+		SHARK_POLY[sIndex].unshift(temp);
+		
+	}
+	
 	//set state variables
 	MAX_VERT_COUNT = 100000;
 	gblColorID = new Vector4D(0.0, 0.0, 0.1, 1.0);
