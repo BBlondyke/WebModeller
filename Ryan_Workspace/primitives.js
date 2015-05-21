@@ -289,7 +289,7 @@ function Toroid(majorRad, minorRad, majorRes, minorRes) {
 		for(var numMinor = 0; numMinor < minorRes - 1; ++numMinor){
 			var newPoly = new Polygon();
 			newPoly.vertList = [numMajor*minorRes + numMinor,
-								numMajor*minorRes + numMinor + 1],
+								numMajor*minorRes + numMinor + 1,
 								numMajor*minorRes + numMinor + minorRes + 1,
 								numMajor*minorRes + numMinor + minorRes];
 			

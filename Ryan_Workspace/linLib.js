@@ -3,14 +3,102 @@
 Ryan Connors
 1344722
 rmconnor@ucsc.edu
-P2 : Model and Shading from file.
+P3 Transformng with picking
 -->
 
  */
  
- //linLib is a support library I wrote for assignments like this
+ //linLib is a support library a wrote for assignments like this
 
 
+/*
+ * Transformation Support Functions
+ * 
+ * This all return arrays that can be used to populate the matrix classes
+ * and then perform easy operations prior to setting the gl uniform matrix
+ */
+
+function makeTranslation2D(deltaX, deltaY) {
+	return [
+	1.0, 	0.0, 	0.0,
+	0.0, 	1.0, 	0.0,
+	deltaX, deltaY, 1.0
+	];
+}
+
+function makeRotation2D(angle) {
+	var cos = Math.cos(angle);
+	var sin = Math.sin(angle);
+	
+	return [
+		cos,	-1 * sin,	0.0,
+		sin,	cos,		0.0,
+		0.0,	0.0,		1.0
+	];
+	
+}
+
+function makeScale2D(scaleX, scaleY) {
+	return [
+		scaleX, 	0.0,	 0.0,
+		0.0,		scaleY,  0.0,
+		0.0,		0.0	,	 1.0
+	];
+}
+
+function makeTranslation3D(deltaX, deltaY, deltaZ) {
+	return [
+		1.0, 	0.0, 	0.0,	0.0,
+		0.0, 	1.0, 	0.0,	0.0,
+		0.0,	0.0,	1.0,	0.0,
+		deltaX,	deltaY,	deltaZ, 1.0
+	];
+}
+
+function makeRotation3DX(angle) {
+	
+	var cos = Math.cos(angle);
+	var sin = Math.sin(angle);
+	
+	return [
+		1.0,	0.0,	0.0,	0.0,
+		0.0,	cos,	sin,	0.0,
+		0.0,	-1*sin,	cos,	0.0,
+		0.0,	0.0,	0.0,	1.0
+	];
+}
+
+function makeRotation3DY(angle) {
+	var cos = Math.cos(angle);
+	var sin = Math.sin(angle);
+	
+	return [
+		cos,	0.0,	-1*sin,		0.0,
+		0.0,	1.0,	0.0,		0.0,
+		sin,	0.0,	cos,		0.0,
+		0.0,	0.0,	0.0,		1.0
+	];
+}
+
+function makeRotation3DZ(angle) {
+	var cos = Math.cos(angle);
+	var sin = Math.sin(angle);
+	return [
+		cos,	sin,	0.0,	0.0,
+		-1*sin, cos,	0.0,	0.0,
+		0.0,	0.0,	1.0,	0.0,
+		0.0,	0.0,	0.0,	1.0
+	];
+}
+
+function makeScale3D(scaleX, scaleY, scaleZ) {
+	return [
+		scaleX, 0.0,	0.0,	0.0,
+		0.0,	scaleY, 0.0,	0.0,
+		0.0,	0.0,	scaleZ,	0.0,
+		0.0,	0.0,	0.0,	1.0
+	];
+}
 
 /*
  * Vector class representing a 3 dimensional vector in space
@@ -81,6 +169,12 @@ function Vector(x, y, z) {
 	this.copy = function() {
 		var rtn = new Vector(this.x, this.y, this.z);
 		return rtn;
+	}
+	
+	this.equals = function(vector) {
+		return (this.x == vector.x &&
+				this.y == vector.y &&
+				this.z == vector.z);
 	}
 	
 	this.toFloat32Array = function() {
@@ -166,10 +260,32 @@ function Vector4D(x, y, z, w) {
 		return (this.x * vector.x + this.y * vector.y + this.z * vector.z + this.w * vector.w);
 	}
 	
+	this.floor = function() {
+		this.x = Math.floor(this.x);
+		this.y = Math.floor(this.y);
+		this.z = Math.floor(this.z);
+		this.w = Math.floor(this.w);
+	}
+	
+	this.round = function() {
+		this.x = Math.round(this.x);
+		this.y = Math.round(this.y);
+		this.z = Math.round(this.z);
+		this.w = Math.round(this.w);
+	}
+	
 	this.copy = function() {
 		var rtn = new Vector4D(this.x, this.y, this.z, this.w);
 		return rtn;
 	}
+	
+	this.equals = function(vector) {
+		return (this.x == vector.x &&
+				this.y == vector.y &&
+				this.z == vector.z &&
+				this.w == vector.w);
+	}
+	
 	
 	this.toFloat32Array = function() {
 		return new Float32Array([
