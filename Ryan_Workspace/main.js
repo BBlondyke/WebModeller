@@ -52,6 +52,9 @@ var qDown;
 var wDown;
 var eDown;
 
+//Global Camera
+var cam;
+
 //Enumeration for shading types
 var ShaderTypes = {
 	FLAT : 0,
@@ -359,7 +362,6 @@ function makeCone(radius, height, numFaces) {
 		vertexList.push(thisVert);
 		base.push(numVert + 2);
 		
-		console.log(vertexList.length);
 	}
 	polyList.push(base);
 	
@@ -368,7 +370,6 @@ function makeCone(radius, height, numFaces) {
 		var newPoly = ["side", 1, numPoly + 1, numPoly + 2];
 		
 		polyList.push(newPoly);
-		console.log(newPoly);
 	}
 	
 	//find extraneous unloopable poly
@@ -901,6 +902,50 @@ function Mesh(colorID, begInd) {
 	}
 }
 
+function Camera(posX, posY, posZ) {
+		this.position = new Vector(posX, posY, posZ);
+		this.target;
+		this.vZ;
+		this.vX;
+		this.vY;
+		
+		this.initalize = function() {
+			
+			if(this.target == undefined) {
+				console.log("camera.initalize() called without target intialized");
+			}
+			//determine viewing Z
+			var temp = this.position.sub(this.target);
+			this.vZ = temp.normalize();
+			
+			//determine viewing x
+			var upVec = new Vector(0.0, 1.0, 0.0);
+			temp = this.vZ.crossProduct(upVec);
+			this.vX = temp.normalize();
+			
+			//determine viewing y
+			temp = this.vX.crossProduct(this.vZ);
+			this.vY = temp.normalize();
+			
+		}
+		
+		this.camMatrix = function() {
+			if (this.vZ == undefined || this.vY == undefined || this.vZ == undefined) {
+				console.log("camera.camMatrix() called without camera initialization.");
+			}
+			
+			var lookAt = new Matrix4D();
+			lookAt.populateFromArray([ this.vX.x, this.vX.y, this.vX.z, 0.0,
+												   this.vY.x, this.vY.y, this.vY.z, 0.0,
+												   this.vZ.x, this.vZ.y, this.vZ.z, 0.0,
+												   this.position.x, this.position.y, this.position.z, 1.0 ]);
+												   
+			return lookAt;
+		}
+		
+		
+}
+
 //turn all mesh items in scene into tris
 function tesselate() {
 	for(var index = 0; index < meshTable.length; ++index) {
@@ -1215,6 +1260,7 @@ vShader = [
 		"uniform mat4  projectionMat;",
 		"uniform mat4  normalMat;",
 		"uniform mat4  pMatrix;",
+		"uniform mat4  camMatrix;",
 		
 		"uniform vec4  lightPosition;",
 		
@@ -1225,6 +1271,7 @@ vShader = [
 		"uniform float realFlag;",
 		"uniform float isFlat;",
 		"uniform float isPersp;",
+		"uniform float useCam;",
 		
 		"void",
 		"main()",
@@ -1236,8 +1283,11 @@ vShader = [
 			
 			//use flag type values to triggle shader code paths
 			//I think everyone is forgetting this is just C with some extra shtuff.
-			"if(isPersp > 0.0) {",
-    			"gl_Position = pMatrix * projectionMat * vPosition;",
+			"if(useCam > 0.0) {",
+    			"gl_Position = pMatrix * projectionMat *  camMatrix *vPosition;",
+			"}",
+			"else if (isPersp > 0.0) {",
+				"gl_Position = pMatrix * projectionMat *  vPosition;",
 			"}",
 			"else {",
 				"gl_Position = projectionMat * vPosition;",
@@ -1265,6 +1315,7 @@ vShader = [
 				"if (isFlat > 0.0) {",
 					"specularComp = vec4(0.0, 0.0, 0.0, 1.0);",
 				"}",
+				
 				
 				"fColor = specularComp + diffComp;",
 				"fColor.a = 1.0;",
@@ -1339,55 +1390,42 @@ vShader = [
 	var cylinder = makeCylinder(0.5, 1.0, 20);
 	var cone = makeCone(0.5, 1.0, 20);
 	
-	addMesh(cylinder[0], cylinder[1]);
+	addMesh(SHARK_COORD, SHARK_POLY);
 	
-	meshTable[0].materialColor = new Vector4D(0.9, 0.9, 0.9, 1.0);
-	meshTable[0].scale(0.3, 0.3, 0.3);
+	meshTable[0].materialColor = new Vector4D(0.3, 0.3, 0.3, 1.0);
+	meshTable[0].scale(0.009, 0.009, 0.009);
+	meshTable[0].translate(0.4, 0.0, 0.0);
 	meshTable[0].shading = ShaderTypes.SMOOTH;
 	meshTable[0].pushBuffer();
 	
-	addMesh(pyramid[0], pyramid[1]);
+	addMesh(SHARK_COORD, SHARK_POLY);
 	
-	meshTable[1].materialColor = new Vector4D(0.9, 0.9, 0.9, 1.0);
-	meshTable[1].rotateX(-Math.PI/2.0);
-	meshTable[1].rotateY(-Math.PI/2.0);
-	meshTable[1].scale(0.3, 0.3, 0.3);
+	meshTable[1].materialColor = new Vector4D(0.3, 0.3, 0.3, 1.0);
+	meshTable[1].rotateY(Math.PI/2.0);
+	meshTable[1].scale(0.009, 0.009, 0.009);
 	meshTable[1].translate(-0.5, 0.0, 0.0);
+	meshTable[0].shading = ShaderTypes.SMOOTH;
+	meshTable[0].pushBuffer();
 	
+	//create camera
+	cam = new Camera(0.0, 0.0, 1.0);
+	cam.target = new Vector(0.0, 0.0, 0.0); 
+	cam.initalize();
 	
-	addMesh(sphere[0], sphere[1]);
-	meshTable[2].materialColor = new Vector4D(0.9, 0.0, 0.0, 1.0);
-	meshTable[2].scale(0.3, 0.3, 0.3);
-	meshTable[2].translate(0.5, 0.0, 0.0);
+	//set control flag
+	var camFlag = new Float32Array([1.0]);
+	var useCam = gl.getUniformLocation(program, "useCam");
+	gl.uniform1f(useCam, camFlag[0]);
 	
+	//set uniform
+	var lookAt = cam.camMatrix();
+	lookAt = lookAt.inverse();
 	
-	addMesh(toroid[0], toroid[1]);
+	var tempMat = new Matrix4D();
+	tempMat.populateFromArray(makeRotation3DY(Math.PI/2.0));
 	
-	meshTable[3].materialColor = new Vector4D(0.9, 0.9, 0.9, 1.0);
-	meshTable[3].scale(0.3, 0.3, 0.3);
-	meshTable[3].translate(0.0, 0.6, 0.0);
-	
-	addMesh(cone[0], cone[1]);
-	meshTable[4].materialColor = new Vector4D(0.0, 1.0, 0.0, 0.0);
-	meshTable[4].scale(0.3, 0.3, 0.3);
-	meshTable[4].translate(0.0, -0.5, 0.0);
-	
-	addMesh(cone[0], cone[1]);
-	meshTable[5].materialColor = new Vector4D(0.0, 1.0, 0.0, 0.0);
-	meshTable[5].scale(0.3, 0.3, 0.3);
-	meshTable[5].translate(-0.5, -0.5, 0.0);
-	meshTable[5].shading = ShaderTypes.SMOOTH;
-	meshTable[5].pushBuffer();
-	
-	addMesh(cube[0], cube[1]);
-	meshTable[6].materialColor = new Vector4D(0.0, 0.0, 1.0, 1.0);
-	meshTable[6].scale(0.3, 0.3, 0.3);
-	meshTable[6].translate(0.5, -0.5, 0.0);
-	
-	for (var mIndex = 0; mIndex < meshTable.length; ++mIndex) {
-		meshTable[mIndex].setStartState();
-	}
-	
+	lookAt = lookAt.matMul(tempMat);
+	gl.uniformMatrix4fv(gl.getUniformLocation(program, "camMatrix"), false, lookAt.toFloat32Array() );
 	
 	renderAll();
 		
@@ -1419,15 +1457,12 @@ vShader = [
 		
 		//construct this picked color vector
 		var thisColor = new Vector4D(pixelData[4*index], pixelData[4 * index + 1], pixelData[4*index + 2], pixelData[4*index + 3]);
-		console.log(thisColor);
-		console.log("-----");
 		
 		//check mesh table for colorID equality
 		for (var mshIndex = 0; mshIndex < meshTable.length; ++mshIndex) {
 			var tempCol = meshTable[mshIndex].colorID.copy();
 			tempCol.scale(255.0);
 			tempCol.floor();
-			console.log(tempCol);
 			
 			if(thisColor.equals(tempCol)) {
 				currentPick = meshTable[mshIndex];
