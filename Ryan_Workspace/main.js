@@ -51,6 +51,7 @@ var sDown;
 var qDown;
 var wDown;
 var eDown;
+var vDown;
 
 //Global Camera
 var cam;
@@ -990,7 +991,23 @@ function mouseMove(event) {
 		//get pos change
 		var deltaPos;
 		
-		
+		//view handling
+		if (vDown) {
+			deltaPosX = mousePos.x - initialMousePos.x;
+			deltaPosY = mousePos.y - initialMousePos.y;
+			
+			//now translate the camera and update
+			cam.position.x += 0.01 * (mousePos.x - initialMousePos.x);
+			cam.position.y += 0.01 * (mousePos.y - initialMousePos.y);
+			
+			var lookAt = cam.camMatrix();
+			lookAt = lookAt.inverse();
+			gl.uniformMatrix4fv(gl.getUniformLocation(program, "camMatrix"), false, lookAt.toFloat32Array() );
+			
+			renderAll();
+			
+			return;
+		}
 		//rotation by key combo handling
 		if(qDown) {
 			//rotation on X
@@ -1008,48 +1025,6 @@ function mouseMove(event) {
 		}
 		//rotation by mouse handling
 		else if(rDown) {
-			/*
-			//take mouse pos initial and convert to world coordinates
-			var nX = 2 * initialPixel.x / canvas.width - 1.0;
-			var nY = 1 - 2*initialPixel.y / canvas.height;
-			var nZ = 0.5//2 - 1.0;
-			var nW = 1.0;
-			var pixelVec = new Vector4D(nX, nY, nZ, nW);
-			
-			//recall "gl_Position = pMatrix * projectionMat * vPosition;",
-			//thus
-			var perspMat = new Matrix4D();//perspective(90, 1, 0.1, -); //<--- this perspective worked like congress, so I made my own
-			perspMat.populateFromArray([ 1.0, 0.0, 0.0, 0.0,
-								 0.0, 1.0, 0.0, 0.0,
-								 0.0, 0.0, 1.0, -0.2, //why 0.9? No reason.. it just looked nicer
-								 0.0, 0.0, 0.0, 1.0
-								 ]);
-			perspMat = perspMat.inverse();
-			
-			var mvMat = currentPick.startState.copy();
-			mvMat = mvMat.inverse();
-			
-			pixelVec = perspMat.rowVecMult(pixelVec);
-			pixelVec = mvMat.rowVecMult(pixelVec)
-			
-			//set our project plane coordinate
-			pixelVec.z = 0.5; 
-			
-			//shoot ray from this pixelCoordinate to the mesh's geometric center
-			var rayCast = new Vector(1.0, 1.0, 1.0);
-			var center = currentPick.geometricCenter();
-			var mouseVec = new Vector((mousePos.x - initialMousePos.x), (initialMousePos.y - mousePos.y), 0.0 ); 
-			
-			rayCast.x = center.x - pixelVec.x;
-			rayCast.y = center.y - pixelVec.y;
-			rayCast.z = center.z - pixelVec.z;
-			
-			//cross product of this ray and the mouse vector is our direction of rotation.
-			var rotationAxis = mouseVec.crossProduct(rayCast);
-			console.log(rotationAxis);
-			
-			//now rotate about this axis, but I'm out of time :( )
-			*/
 
 			currentPick.rotateYRelative(0.01 * (mousePos.x - initialMousePos.x));			
 			currentPick.rotateXRelative(0.01 * (initialMousePos.y - mousePos.y));
@@ -1150,6 +1125,9 @@ window.addEventListener("keydown", function(event) {
 	else if (event.keyCode == 69) {
 		eDown = true;
 	}
+	else if (event.keyCode == 86) {
+		vDown = true;
+	}
 	else if (event.keyCode == 78) {
 		var thisIndex = meshTable.length;
 		var cube = makeCube(1.0);
@@ -1197,6 +1175,9 @@ window.addEventListener("keyup", function(event) {
 	}
 	else if (event.keyCode == 69) {
 		eDown = false;
+	}
+	else if (event.keyCode == 86) {
+		vDown = false;
 	}
 	
 	resolvingEvent = true;
@@ -1397,21 +1378,25 @@ vShader = [
 	meshTable[0].translate(0.4, 0.0, 0.0);
 	meshTable[0].shading = ShaderTypes.SMOOTH;
 	meshTable[0].pushBuffer();
+	meshTable[0].setStartState();
 	
 	addMesh(SHARK_COORD, SHARK_POLY);
 	
 	meshTable[1].materialColor = new Vector4D(0.3, 0.3, 0.3, 1.0);
-	meshTable[1].rotateY(Math.PI/2.0);
 	meshTable[1].scale(0.009, 0.009, 0.009);
-	meshTable[1].translate(-0.5, 0.0, 0.0);
-	meshTable[0].shading = ShaderTypes.SMOOTH;
-	meshTable[0].pushBuffer();
+	meshTable[1].translate(-0.5, -0.5, 0.0);
+	meshTable[1].setStartState();
 	
 	//create camera
 	cam = new Camera(0.0, 0.0, 1.0);
 	cam.target = new Vector(0.0, 0.0, 0.0); 
 	cam.initalize();
+	var vz_norm = cam.vZ.copy();
+	vz_norm.x *= -20;
+	vz_norm.y *= -20;
+	vz_norm.z *= -20;
 	
+	cam.position = cam.position.add(vz_norm);
 	//set control flag
 	var camFlag = new Float32Array([1.0]);
 	var useCam = gl.getUniformLocation(program, "useCam");
@@ -1421,10 +1406,10 @@ vShader = [
 	var lookAt = cam.camMatrix();
 	lookAt = lookAt.inverse();
 	
-	var tempMat = new Matrix4D();
-	tempMat.populateFromArray(makeRotation3DY(Math.PI/2.0));
+	//var tempMat = new Matrix4D();
+	//tempMat.populateFromArray(makeRotation3DY(Math.PI/2.0));
 	
-	lookAt = lookAt.matMul(tempMat);
+	//lookAt = lookAt.matMul(tempMat);
 	gl.uniformMatrix4fv(gl.getUniformLocation(program, "camMatrix"), false, lookAt.toFloat32Array() );
 	
 	renderAll();
@@ -1439,6 +1424,7 @@ vShader = [
 	
 	//picking handler
 	canvas.addEventListener("mousedown", function(event)  {
+		
 		//on mouse click transform percieved canvas pixel coordinates
 		//into something we can work with.. 
 		//nothing but algebraic goodness here.
@@ -1483,6 +1469,30 @@ vShader = [
 		resolvingEvent = false;
 	});
 	
+	//mouse wheel for camera zoom
+	canvas.addEventListener("wheel", function(event) {
+		if(!vDown) {
+			return;
+		}
+		var vz = cam.vZ.copy();
+		vz.scale(3.0);
+		console.log(event.wheelDelta);
+		if(event.wheelDelta > 0) {
+			cam.position = cam.position.sub(vz);
+		}
+		else if (event.wheelDelta < 0) {
+			cam.position = cam.position.add(vz);
+		}
+		else {
+			return;
+		}
+		
+		var lookAt = cam.camMatrix();
+		lookAt = lookAt.inverse();
+		gl.uniformMatrix4fv(gl.getUniformLocation(program, "camMatrix"), false, lookAt.toFloat32Array() );
+		
+		renderAll();
+	});
 	
 	
 
