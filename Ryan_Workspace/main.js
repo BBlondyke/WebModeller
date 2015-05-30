@@ -1109,7 +1109,12 @@ function renderAll() {
 	}
 	
 	updatePixelData();
-	
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+	if (polyPick) {
+		for (var index = 0; index < meshTable.length; ++index) {
+			meshTable[index].renderPP();
+		}
+	}
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
 	for (var index = 0; index < meshTable.length; ++index) {
@@ -1553,9 +1558,6 @@ vShader = [
 	
 	renderAll();
 		
-	gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-	
-	meshTable[1].renderPP();
 	polyMode = true;
 	
 	//event handling
