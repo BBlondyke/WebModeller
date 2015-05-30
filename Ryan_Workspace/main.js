@@ -515,6 +515,13 @@ function Polygon(vtxList, mesh) {
 	
 	this.parentMesh = mesh;
 	
+	this.center = new Vector(0.0, 0.0, 0.0);
+	
+	for(var numVert = 0; numVert < this.vertCount(); ++numVert){
+		this.center = this.center.add(this.parentMesh.vertTable[this.vertList[numVert]]);
+	}
+	this.center = this.center.scale(1 / this.vertCount())
+
 	//Walk through each  vertex and use them to create tris, ignore the techicalities of what tesselation actually entails
 	this.tesselate = function() {
 	
@@ -532,11 +539,23 @@ function Polygon(vtxList, mesh) {
 			
 			for (var triInd = 0; triInd < (thisTri.vertList).length; ++triInd) {
 				this.parentMesh.vertTable[thisTri.vertList[triInd]].addNormal(normalVec);
-			}
-			
-	}
+			}	
+		}
 		
 		return triList;
+	}
+	
+	this.scale = function(deltaPos){
+		for(var numVert = 0; numVert < this.vertCount(); ++numVert){
+			var origVec = this.parentMesh.vertTable[this.vertList[numVert]].copy();
+			var differenceVec = origVec.sub(this.center);
+			if(deltaPos < 0){
+				this.parentMesh.vertTable[this.vertList[numVert]] = differenceVec.scale(0.95) + origVert;
+			}
+			else if (input > 0){
+				this.parentMesh.vertTable[this.vertList[numVert]] = differenceVec.scale(1.05) + origVert;
+			}
+		}
 	}
 }
 
@@ -729,7 +748,7 @@ function Mesh(colorID, begInd) {
 	}
 	
 	this.tesselate = function() {
-		this.triTable = []
+		this.triTable = [];
 		for (var index = 0; index < this.polyTable.length; ++index) {
 			this.triTable = this.triTable.concat(this.polyTable[index].tesselate());
 		}
@@ -747,8 +766,8 @@ function Mesh(colorID, begInd) {
 		}
 		else if (input > 0) {
 			this.scaleMat.x.x = this.scaleMat.x.x * 1.05;
-			this.scaleMat.y.y = this.scaleMat.x.x * 1.05;
-			this.scaleMat.z.z = this.scaleMat.x.x * 1.05;
+			this.scaleMat.y.y = this.scaleMat.x.y * 1.05;
+			this.scaleMat.z.z = this.scaleMat.x.z * 1.05;
 		}
 	}
 
