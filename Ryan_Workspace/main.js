@@ -30,7 +30,9 @@ var canvas;
 //tables for picking
 var arraySize;
 var pixelData;
+var polyPixelData;
 var colorData;
+var polyColorData;
 
 //Global Table for Meshes
 var meshTable;
@@ -41,6 +43,7 @@ var gblColorID;
 //Program State Variables
 var isReal;
 var currentPick;
+var polyPick;
 var mousePos;
 var initialMousePos;
 var initialPixel;
@@ -52,6 +55,7 @@ var qDown;
 var wDown;
 var eDown;
 var vDown;
+var polyMode;
 
 //Global Camera
 var cam;
@@ -468,7 +472,7 @@ function  updatePixelData() {
  * Triangle Class : represents a triangle 
  */
 
-function Triangle(vtxList, mesh) {
+function Triangle(vtxList, mesh, poly) {
 	
 	if (vtxList.length != 3) {
 		console.log("Error : Triangle : Constructor called with invalid list");
@@ -478,6 +482,7 @@ function Triangle(vtxList, mesh) {
 	this.vertList = [];
 	
 	this.parentMesh = mesh;
+	this.parentPoly = poly;
 	
 	for (var index = 0; index < vtxList.length; ++index) {
 		this.vertList.push(vtxList[index]);
@@ -500,7 +505,7 @@ function Triangle(vtxList, mesh) {
  * Polygon class : represents a polygon in three dimensional space.
  */
 function Polygon(vtxList, mesh) {
-
+	this.colorID;
 	this.vertList = [];
 	
 	for(var index = 0; index < vtxList.length; ++index){
@@ -508,6 +513,7 @@ function Polygon(vtxList, mesh) {
 	}
 	
 	this.vertCount = function() {return this.vertList.length;};	
+	
 	
 	this.addVert = function(key) {
 		vertList.push(key);
@@ -530,7 +536,7 @@ function Polygon(vtxList, mesh) {
 		
 			var thisTri = new Triangle( [ this.vertList[0],
 										  this.vertList[index-1],
-										  this.vertList[index]    ], this.parentMesh );
+										  this.vertList[index]    ], this.parentMesh, this );
 										  
 			triList.push(thisTri);
 			
@@ -614,6 +620,7 @@ function Polygon(vtxList, mesh) {
  */
 function Mesh(colorID, begInd) {
 	this.colorID = colorID.copy();
+	this.currentPolyID = new Vector4D(0.0, 0.0, 0.00392, 1.0);
 	this.materialColor = new Vector4D(0.3, 0.3, 0.3, 1.0);
 	
 	this.polyTable = [];
@@ -666,7 +673,39 @@ function Mesh(colorID, begInd) {
 	this.minZ = Number.POSITIVE_INFINITY;
 	this.maxZ = Number.NEGATIVE_INFINITY;	
 	
+	this.incremPolyColor = function() {
+		
+		
+		var incremVal = 1.0/255.0;
+		
+		if (this.currentPolyID.z >= 1) {
+			this.currentPolyID.z = 0;
+			if (this.currentPolyID.y >= 1) {
+				
+				this.currentPolyID.y = 0
+				
+				if (this.currentPolyID.x >= 1) {
+					console.log("ERROR: Poly pick colors exhausted...");
+					return;
+				}else {
+					this.currentPolyID.x += 1.0/255.0;
+				}
+				 
+			}
+			else {
+				this.currentPolyID.y += 1.0/255.0;
+			}
+		}
+		else {
+			this.currentPolyID.z += 1.0/255.0;
+		}
+		
+	}
+	
 	this.geometricCenter = function() {
+		
+		//approximation
+		
 		var rtn = new Vector();
 		
 		rtn.x = this.minX + this.maxX / 2.0;
@@ -674,6 +713,7 @@ function Mesh(colorID, begInd) {
 		rtn.z = this.minZ + this.maxZ / 2.0;
 				
 		return rtn;
+		
 	}
 	
 	this.parseData = function(coords, polys) {
@@ -706,6 +746,8 @@ function Mesh(colorID, begInd) {
 			}
 			
 			var thisPoly = new Polygon(vertList, this);
+			thisPoly.colorID = this.currentPolyID.copy();
+			this.incremPolyColor();
 			this.polyTable.push(thisPoly);
 		}
 		
@@ -840,6 +882,85 @@ function Mesh(colorID, begInd) {
 		this.startState = glTransMat; 
 	}
 	
+	this.renderPP = function () {
+		if(this.triTable.length == 0)
+			return;
+		
+		//tell shader this is a poly ID render
+		var flag = new Float32Array([1.0]);
+ 		gl.uniform1f(gl.getUniformLocation(program, "realFlag"), flag[0]);
+ 		
+ 		gl.uniform1f(gl.getUniformLocation(program, "isFlat"), new Float32Array([0.0]));
+		//"uniform float isPersp;",
+		gl.uniform1f(gl.getUniformLocation(program, "isPersp"), new Float32Array([1.0])[0]);
+		
+		//perform matrix calculations and then push them to buffer
+		var glTransMat = new Matrix4D();
+		glTransMat.populateFromArray([1.0, 0.0, 0.0, 0.0,
+									0.0, 1.0, 0.0, 0.0,
+									0.0, 0.0, 1.0, 0.0,
+									0.0, 0.0, 0.0, 1.0]);
+		
+		glTransMat = glTransMat.matMul(this.scaleMat);
+		
+		glTransMat = glTransMat.matMul(this.rotMatX);
+		glTransMat = glTransMat.matMul(this.rotMatY);
+		glTransMat = glTransMat.matMul(this.rotMatZ);
+		
+		glTransMat = glTransMat.matMul(this.transMat);
+		
+		//shark begins at origin, so lets just scale, then rotate, then translate.
+		//awwww yeah
+		//set this matrix as gl uniform
+		var projMat = gl.getUniformLocation(program, "projectionMat");
+		gl.uniformMatrix4fv(projMat, false, glTransMat.toFloat32Array());	
+		
+		//set normal matrix
+		var uNorm = new Matrix4D();
+		uNorm = (glTransMat.inverse()).transpose();
+		var normMat = gl.getUniformLocation(program, "normalMat");
+		gl.uniformMatrix4fv(normMat, false, uNorm.toFloat32Array() );
+		
+		//set projection matrix
+		var perspMat = new Matrix4D();//perspective(90, 1, 0.1, -); //<--- this perspective worked like congress, so I made my own
+		perspMat.populateFromArray([ 1.0, 0.0, 0.0, 0.0,
+								 0.0, 1.0, 0.0, 0.0,
+								 0.0, 0.0, 1.0, -0.2, //why 0.9? No reason.. it just looked nicer
+								 0.0, 0.0, 0.0, 1.0
+								 ]);
+	
+		//set this matrix as gl uniform
+		var pMat = gl.getUniformLocation(program, "pMatrix");
+		gl.uniformMatrix4fv(pMat, false, perspMat.toFloat32Array());
+		projectionMatric = pMat;
+		
+		//first vertex of triangle 1 of this mesh
+		var startIndex = Math.floor(this.startBufInd/12.0);
+		
+		//XXTODO alter this to render each polygon by triangle
+		var thisTri = startIndex;
+		//from starting index to,for the number of verts in this mesh
+ 		for (var index = 0; index < this.triTable.length; ++index) {
+ 			
+ 			//set color
+ 			if (this.triTable[index].parentPoly == undefined)
+ 				console.log("")
+ 			gl.uniform4fv(gl.getUniformLocation(program, "id_color"),this.triTable[index].parentPoly.colorID.toFloat32Array());
+ 			
+ 			//dray tri
+ 			gl.drawArrays(gl.TRIANGLES, thisTri, 3);
+ 			thisTri += 3;
+ 		}
+ 		
+ 		//update PixelData
+ 		var pixArraySize = canvas.width * canvas.height * 32;
+	 	polyPixelData = new Uint8Array(arraySize);
+	 	gl.readPixels(0, 0, canvas.width, canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, polyPixelData);
+	 	polyColorData = new Uint32Array(polyPixelData.buffer); 
+			
+	}
+	
+	
 	this.render = function(isId) {
 		if(this.triTable.length == 0)
 			return;
@@ -860,7 +981,6 @@ function Mesh(colorID, begInd) {
 		}
 		
 		//set id color and tri_color
-		var test = this.colorID.toFloat32Array();
 		gl.uniform4fv(gl.getUniformLocation(program, "id_color"),this.colorID.toFloat32Array());
 		gl.uniform4fv(gl.getUniformLocation(program, "tri_color"), this.materialColor.toFloat32Array());
 		
@@ -916,7 +1036,7 @@ function Mesh(colorID, begInd) {
 			gl.drawArrays(gl.TRIANGLES, startIndex, 3 * this.triTable.length);
 		}
 		else {
-			gl.drawArrays(gl.LINE_LOOP, startIndex, 3 * this.triTable.length);
+			gl.drawArrays(gl.LINES, startIndex, 3 * this.triTable.length);
 		}
 		
 	}
@@ -1121,7 +1241,7 @@ function addMesh(cArray, pArray) {
 	
 	//increm globals
 	//farm out to function that checks current color vec for color in range 0 - 1 then moves to next color component
-	gblColorID.z += 0.00392;
+	gblColorID.z += 1.0/255.0;
 }
 
 //keyboard listening
@@ -1240,7 +1360,7 @@ window.onload = function() {
 	
 	//set state variables
 	MAX_VERT_COUNT = 100000;
-	gblColorID = new Vector4D(0.0, 0.0, 0.1, 1.0);
+	gblColorID = new Vector4D(0.0, 0.0, 1.0/255.0, 1.0);
 	resolvingEvent = false;
 	meshTable = [];
 	currentVBuffInd = 0;
@@ -1433,6 +1553,10 @@ vShader = [
 	
 	renderAll();
 		
+	gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+	
+	meshTable[1].renderPP();
+	polyMode = true;
 	
 	//event handling
 	
@@ -1471,6 +1595,23 @@ vShader = [
 			
 			if(thisColor.equals(tempCol)) {
 				currentPick = meshTable[mshIndex];
+				
+				//now get poly
+				if (polyMode) {
+					var polyColor = new Vector4D(polyPixelData[4*index], polyPixelData[4 * index + 1], polyPixelData[4*index + 2], polyPixelData[4*index + 3]);
+					
+					for (var plyIndex = 1; plyIndex < currentPick.polyTable.length; ++plyIndex) {
+						var tempPlyCol = currentPick.polyTable[plyIndex].colorID.copy();
+						tempPlyCol.scale(255.0);
+						tempPlyCol.floor();
+						
+						if(polyColor.equals(tempPlyCol)) {
+							polyPick = currentPick.polyTable[plyIndex];
+							console.log(polyPick);
+							console.log(plyIndex);
+						}
+					}
+				}
 				return;
 			}
 		}
