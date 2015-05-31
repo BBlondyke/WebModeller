@@ -924,10 +924,10 @@ function Mesh(colorID, begInd) {
 		gl.uniformMatrix4fv(normMat, false, uNorm.toFloat32Array() );
 		
 		//set projection matrix
-		var perspMat = new Matrix4D();//perspective(90, 1, 0.1, -); //<--- this perspective worked like congress, so I made my own
+		var perspMat = new Matrix4D();
 		perspMat.populateFromArray([ 1.0, 0.0, 0.0, 0.0,
 								 0.0, 1.0, 0.0, 0.0,
-								 0.0, 0.0, 1.0, -0.2, //why 0.9? No reason.. it just looked nicer
+								 0.0, 0.0, 1.0, -0.2,
 								 0.0, 0.0, 0.0, 1.0
 								 ]);
 	
@@ -1306,17 +1306,77 @@ function deleteMesh() {
 }
 
 function merge() {
+	//get start stateState
+	var operandA = lastPick;
+	var operandB = currentPick;
+	var operandA_state = lastPick.startState;
+	var operandB_state = currentPick.startState;
+	var operandA_face   = lastPolyPick;
+	var operandB_face   = polyPick;
+	
+	//convert to viewport for calculations and condition check
+	//recall : gl_Position = pMatrix * projectionMat *  vPosition;
+	
+	var perspMat = new Matrix4D();
+	perspMat.populateFromArray([ 1.0, 0.0, 0.0, 0.0,
+											   0.0, 1.0, 0.0, 0.0,
+											   0.0, 0.0, 1.0, -0.2,
+											   0.0, 0.0, 0.0, 1.0 ]);
+											   
+	//projMats are startStates
+	
+	var vertList_A = [[]];
+	var vertList_B = [[]];
+	
+	for (var index = 0; index < operandA.vertTable.length; ++index) {
+		var temp = operandA.vertTable[index].copy();
+		var compMat = perspMat.matMul(operandA_state);
+		temp = compMat.rowVecMult(temp);
+		vertList_A.push(temp);
+	}
+	
+	for (var index = 0; index < operandB.vertTable.length; ++index) {
+		var temp = operandB.vertTable[index].copy();
+		var compMat = perspMat.matMil(operandB_state);
+		temp = compMat.rowVecMult(temp);
+		vertList_B.push(temp);
+	}
+		
+	
 	// check initial conditions
 	
+	//get poly Norms
+	var norm_A = new Vector(0.0, 0.0, 0.0);
+	var norm_B = new Vector(0.0, 0.0, 0.0);
+	
+	for (var index = 0; index < operandA.triTable.length; ++index) {
+		//	norm_A = norm_A.add(operandA.triTable[index].calculateNormal());
+		var thisNorm = new Vector(0.0, 0.0, 0.0);
+		
+	}
+	
+	for (var index = 0; index < operandB.triTable.length; ++index) {
+		
+	}
+	
 	//selected polys should
-	//1 .) the angle between the normals of poly A and poly B should be around 180 degrees
-	//for now 175 degree to 185 degrees
+	//1 .) the angle between the 'normals' of poly A and poly B should be around 180 degrees
+	//for now 175 degree to 185 degrees. This is just an arbitrary value, we might want to change this
+	//the poly normals are the average normal of the triangles that comprise them
+	
+	//determine poly normals
+	
+	
+	
+	
 	
 	//2.) The number of vertices on the ajoining faces should be equals
 	
 	
 	
 	//perform merge
+	//convert all coordinates to clip space and use those for calculation
+	//then convert back to world coordinates for storage
 	
 	//for each vertex in polyA.
 	
