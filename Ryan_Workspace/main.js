@@ -1305,6 +1305,39 @@ function deleteMesh() {
 	renderAll();
 }
 
+function merge() {
+	// check initial conditions
+	
+	//selected polys should
+	//1 .) the angle between the normals of poly A and poly B should be around 180 degrees
+	//for now 175 degree to 185 degrees
+	
+	//2.) The number of vertices on the ajoining faces should be equals
+	
+	
+	
+	//perform merge
+	
+	//for each vertex in polyA.
+	
+		//find closes vert in polyB
+		
+		//perform vector addition for new vertex location
+		
+		//assign this as new vertex location
+		
+	//stitch together new verts
+	
+	
+	//create new mesh object with compounded data from both objects
+	
+	//delete currentPick and lastPick
+	
+	//add this new Mesh to the table
+	
+	//return
+}
+
 //keyboard listening
 window.addEventListener("keydown", function(event) {
 	if(event.keyCode == 90) {
