@@ -1110,7 +1110,7 @@ function renderAll() {
 	
 	updatePixelData();
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-	if (polyPick) {
+	if (polyMode) {
 		for (var index = 0; index < meshTable.length; ++index) {
 			meshTable[index].renderPP();
 		}
@@ -1532,33 +1532,17 @@ vShader = [
 	meshTable[1].setStartState();
 	
 	//create camera
-	cam = new Camera(0.0, 0.0, 1.0);
-	cam.target = new Vector(0.0, 0.0, 0.0); 
-	cam.initalize();
-	var vz_norm = cam.vZ.copy();
-	vz_norm.x *= -20;
-	vz_norm.y *= -20;
-	vz_norm.z *= -20;
 	
-	cam.position = cam.position.add(vz_norm);
-	//set control flag
-	var camFlag = new Float32Array([1.0]);
+	var camFlag = new Float32Array([0.0]);
 	var useCam = gl.getUniformLocation(program, "useCam");
 	gl.uniform1f(useCam, camFlag[0]);
+
 	
-	//set uniform
-	var lookAt = cam.camMatrix();
-	lookAt = lookAt.inverse();
-	
-	//var tempMat = new Matrix4D();
-	//tempMat.populateFromArray(makeRotation3DY(Math.PI/2.0));
-	
-	//lookAt = lookAt.matMul(tempMat);
-	gl.uniformMatrix4fv(gl.getUniformLocation(program, "camMatrix"), false, lookAt.toFloat32Array() );
+	polyMode = true;
 	
 	renderAll();
 		
-	polyMode = true;
+	
 	
 	//event handling
 	
