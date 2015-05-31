@@ -43,7 +43,9 @@ var gblColorID;
 //Program State Variables
 var isReal;
 var currentPick;
+var lastPick
 var polyPick;
+var lastPolyPick;
 var mousePos;
 var initialMousePos;
 var initialPixel;
@@ -1641,7 +1643,10 @@ vShader = [
 			tempCol.floor();
 			
 			if(thisColor.equals(tempCol)) {
+				lastPick = currentPick;
 				currentPick = meshTable[mshIndex];
+				console.log(currentPick);
+				console.log(lastPick);
 				
 				//now get poly
 				if (polyMode) {
@@ -1653,16 +1658,17 @@ vShader = [
 						tempPlyCol.floor();
 						
 						if(polyColor.equals(tempPlyCol)) {
+							lastPolyPick = polyPick;
 							polyPick = currentPick.polyTable[plyIndex];
 							console.log(polyPick);
-							console.log(plyIndex);
+							console.log(lastPolyPick);
 						}
 					}
 				}
 				return;
 			}
 		}
-		
+		lastPick = undefined;
 		currentPick = undefined;
 
 		
