@@ -1249,6 +1249,60 @@ function addMesh(cArray, pArray) {
 	gblColorID.z += 1.0/255.0;
 }
 
+function deleteMesh() {
+	if (currentPick == undefined) {
+		return;
+	}
+	var thisMeshIndex;
+	
+	//remove this mesh from the table
+	for (var index = 0; index < meshTable.length; ++index) {
+		if(currentPick.startBufInd == meshTable[index].startBufInd) {
+			thisMeshIndex = index;
+			meshTable.splice(index, 1);
+			currentPick = undefined;
+			break;
+		}
+	}
+	
+	//if this was the last mesh, there's nothing more to do,
+	if(meshTable.length == 0) {
+		currentVBuffInd = 0;
+		return;
+	}
+	
+	
+	//update all indices
+	//First good data is at the index previous to the removal
+	thisMeshIndex -= 1;
+	
+	//ensure thisMeshIndex is the index to start
+	//adjusting data and make sure it's data is correct.
+	
+	//if zeroth was removed set new zeroth as start point
+	if (thisMeshIndex == -1) {
+		thisMeshIndex = 0;
+		meshTable[thisMeshIndex].startBufInd  = 0;
+		meshTable[thisMeshIndex].endBufInd = meshTable[thisMeshIndex].startBufInd + 12 * (3 * meshTable[thisMeshIndex].triTable.length);
+		currentVBuffInd = meshTable[thisMeshIndex].endBufInd;
+	}
+	
+	//using this starting point
+	//use the linear relationship of data to adjust fields
+	
+	for (var index = thisMeshIndex+1; index < meshTable.length; ++index) {
+		meshTable[thisMeshIndex].startBufInd = currentVBuffInd;
+		meshTable[thisMeshIndex].endBufInd = meshTable[thisMeshIndex].startBufInd + 12 * (3 * meshTable[thisMeshIndex].triTable.length);
+		currentVBuffInd = meshTable[thisMeshIndex].endBufInd;
+	}
+	
+	for (var index = 0; index < meshTable.length; ++index) {
+		meshTable[index].pushBuffer();
+	}
+	
+	renderAll();
+}
+
 //keyboard listening
 window.addEventListener("keydown", function(event) {
 	if(event.keyCode == 90) {
@@ -1271,6 +1325,9 @@ window.addEventListener("keydown", function(event) {
 	}
 	else if (event.keyCode == 86) {
 		vDown = true;
+	}
+	else if (event.keyCode == 46) {
+		deleteMesh();
 	}
 	else if (event.keyCode == 78) {
 		var thisIndex = meshTable.length;
@@ -1531,8 +1588,12 @@ vShader = [
 	meshTable[1].translate(-0.5, -0.5, 0.0);
 	meshTable[1].setStartState();
 	
-	//create camera
-	
+	addMesh(cube[0], cube[1]);
+	meshTable[2].scale(0.3, 0.3, 0.3);
+	meshTable[2].translate(-0.3, 0.3, 0.0);
+	meshTable[2].setStartState();
+
+	//disable camera
 	var camFlag = new Float32Array([0.0]);
 	var useCam = gl.getUniformLocation(program, "useCam");
 	gl.uniform1f(useCam, camFlag[0]);
