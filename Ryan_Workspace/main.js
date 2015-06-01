@@ -510,7 +510,7 @@ function Polygon(vtxList, mesh) {
 	this.colorID;
 	this.vertList = [];
 	
-	for(var index = 0; index < vtxList.length; ++index){
+	for(var index = 0; index < vtxList.length; ++index) {
 		this.vertList.push(vtxList[index]);
 	}
 	
@@ -526,7 +526,10 @@ function Polygon(vtxList, mesh) {
 	this.center = new Vector(0.0, 0.0, 0.0);
 	
 	for(var numVert = 0; numVert < this.vertCount(); ++numVert){
+		// console.log("First");
+		// console.log(this.vertList[numVert]);
 		this.center = this.center.add(this.parentMesh.vertTable[this.vertList[numVert]]);
+		// console.log("Second");
 	}
 	this.center = this.center.scale(1 / this.vertCount())
 
@@ -1235,6 +1238,8 @@ function addMesh(cArray, pArray) {
 	temp.pushBuffer();
 	temp.setStartState();
 	
+	console.log("Not before here");
+	
 	var sX = (2.0)/(temp.maxX - temp.minX);
 	var sY = (1.0)/(temp.maxY - temp.minY);
 	var sZ = (1.2)/(temp.maxZ - temp.minZ);
@@ -1314,6 +1319,14 @@ function merge() {
 	var operandA_face   = lastPolyPick;
 	var operandB_face   = polyPick;
 	
+	console.log("operandA_face: " + operandA_face.vertList);
+	console.log("operandB_face: " + operandB_face.vertList);
+	
+	if(lastPolyPick.vertList.length != polyPick.vertList.length){
+		alert("Merge operands have unequal number of vertices");
+		return;
+	}
+	
 	//convert to viewport for calculations and condition check
 	//recall : gl_Position = pMatrix * projectionMat *  vPosition;
 	
@@ -1325,39 +1338,222 @@ function merge() {
 											   
 	//projMats are startStates
 	
-	var vertList_A = [[]];
-	var vertList_B = [[]];
+	var vertTable_A = [[]];
+	var vertTable_B = [[]];
+	var vertList_A = [];
+	var vertList_B = [];
+	var pairedVerts = [];
+	var reversePairedVerts = [];
 	
-	for (var index = 0; index < operandA.vertTable.length; ++index) {
+	//copy vertTable of operandA
+	for (var index = 1; index < operandA.vertTable.length; ++index) {
 		var temp = operandA.vertTable[index].copy();
-		var compMat = perspMat.matMul(operandA_state);
-		temp = compMat.rowVecMult(temp);
-		vertList_A.push(temp);
+		temp = new Vector4D(temp.x, temp.y, temp.z, 1.0);
+		temp = operandA_state.rowVecMult(temp);
+		console.log("temp: " + temp.x + ", " + temp.y + ", " + temp.z);
+		vertTable_A.push(new Vector(temp.x, temp.y, temp.z));
+		console.log(vertTable_A[index]);
 	}
 	
-	for (var index = 0; index < operandB.vertTable.length; ++index) {
+	//copy vertTable of operandB
+	for (var index = 1; index < operandB.vertTable.length; ++index) {
 		var temp = operandB.vertTable[index].copy();
-		var compMat = perspMat.matMil(operandB_state);
-		temp = compMat.rowVecMult(temp);
-		vertList_B.push(temp);
-	}
-		
-	
-	// check initial conditions
-	
-	//get poly Norms
-	var norm_A = new Vector(0.0, 0.0, 0.0);
-	var norm_B = new Vector(0.0, 0.0, 0.0);
-	
-	for (var index = 0; index < operandA.triTable.length; ++index) {
-		//	norm_A = norm_A.add(operandA.triTable[index].calculateNormal());
-		var thisNorm = new Vector(0.0, 0.0, 0.0);
-		
+		temp = new Vector4D(temp.x, temp.y, temp.z, 1.0);
+		temp = operandB_state.rowVecMult(temp);
+		vertTable_B.push(new Vector(temp.x, temp.y, temp.z));
 	}
 	
-	for (var index = 0; index < operandB.triTable.length; ++index) {
+	//copy vertList of operandA_face
+	for (var index = 0; index < operandA_face.vertList.length; ++index) {
+		// console.log(operandA_face.vertList[index]);
+		var temp = operandA.vertTable[operandA_face.vertList[index]].copy();
+		temp = new Vector4D(temp.x, temp.y, temp.z, 1.0);
+		// console.log(temp);
+		temp = operandA_state.rowVecMult(temp);
+		// console.log(temp);
+		vertList_A.push(new Vector(temp.x, temp.y, temp.z));
 		
+		pairedVerts.push(-1);
+		reversePairedVerts.push(-1);
 	}
+	
+	//copy vertList of operandB_face
+	for (var index = 0; index < operandB_face.vertList.length; ++index) {
+		var temp = operandB.vertTable[operandB_face.vertList[index]].copy();
+		temp = new Vector4D(temp.x, temp.y, temp.z, 1.0);
+		temp = operandB_state.rowVecMult(temp);
+		vertList_B.push(new Vector(temp.x, temp.y, temp.z));
+	}
+	
+	//pair up all verts
+	for(var numVert_A = 0; numVert_A < vertList_A.length; ++numVert_A){
+		var curPair = -1;
+		var curPairDist;
+		for(var numVert_B = 0; numVert_B < vertList_B.length; ++numVert_B){
+			if(reversePairedVerts[numVert_B] != -1){
+				continue;
+			}
+			else{
+				// console.log(vertList_A[numVert_A]);
+				var differenceVec = vertList_A[numVert_A].sub(vertList_B[numVert_B]);
+				if(curPair == -1){
+					curPair = numVert_B;
+					curPairDist = Math.sqrt(differenceVec.dotProduct(differenceVec));
+				}
+				else{
+					var thisDist = Math.sqrt(differenceVec.dotProduct(differenceVec));
+					if(thisDist < curPairDist){
+						curPair = numVert_B;
+						curPairDist = thisDist;
+					}
+				}
+			}
+		}
+		pairedVerts[numVert_A] = curPair;
+		reversePairedVerts[curPair] = numVert_A;
+	}
+	
+	console.log(pairedVerts);
+	console.log(reversePairedVerts);
+	
+	for(var numVert = 0; numVert < vertTable_A.length; ++numVert){
+		console.log("data: " + vertTable_A[numVert]);
+	}
+	
+	//calculate the merged vertices in clip space
+	for(var numVert = 0; numVert < vertList_A.length; ++numVert){
+		//using distance between transformed vert and transformed center was not working, but doesn't really matter
+		var centerVec_A = operandA.vertTable[operandA_face.vertList[numVert]].sub(operandA.geometricCenter());
+		var weight_A = centerVec_A.magnitude();
+		var centerVec_B = operandB.vertTable[operandB_face.vertList[pairedVerts[numVert]]].sub(operandB.geometricCenter());
+		var weight_B = centerVec_B.magnitude();
+		var weightedVec_A = vertList_A[numVert].scalarMult(weight_A);
+		var weightedVec_B = vertList_B[pairedVerts[numVert]].scalarMult(weight_B);
+		var newVert = weightedVec_A.add(weightedVec_B);
+		newVert = newVert.scalarMult(1/(Math.abs(weight_A) + Math.abs(weight_B)));
+		vertTable_A[operandA_face.vertList[numVert]] = newVert;
+	}
+	
+	for(var numVert = 0; numVert < vertTable_A.length; ++numVert){
+		console.log("data: " + vertTable_A[numVert]);
+	}
+	
+	//grab number needed to correct operandB's vertex indices in polyList
+	var deltaIndex = vertTable_A.length - 1;
+	
+	//combine vertTables
+	for(var numVert = 1; numVert < vertTable_B.length; ++numVert){
+		var isMergeVert = false;
+		for(var numVert_B = 0; numVert_B < operandB_face.vertList.length; ++numVert_B){
+			if(numVert == operandB_face.vertList[numVert_B]){
+				isMergeVert = true;
+				break;
+			}
+		}
+		if(isMergeVert)
+			continue;
+		vertTable_A.push(vertTable_B[numVert]);
+	}
+	
+	//revert combined vertTable to operandA's world coords
+	var inverseStartState_A = operandA_state.inverse();
+	for(var numVert = 1; numVert < vertTable_A.length; ++numVert){
+		console.log("length: " + vertTable_A.length);
+		console.log("index: " + numVert);
+		console.log("thing: " + vertTable_A[numVert]);
+		var temp = inverseStartState_A.rowVecMult(new Vector4D(vertTable_A[numVert].x, vertTable_A[numVert].y, vertTable_A[numVert].z, 1.0));
+		vertTable_A[numVert] = new Vector(temp.x, temp.y, temp.z);
+	}
+	
+	//create new table of Polygons
+	var newPolyTable = [];
+	
+	//add all operandA Polygons to new table except merged one
+	var removedFace = false;
+	for(var numPoly = 1; numPoly < operandA.polyTable.length; ++numPoly){
+		if(!removedFace){
+			if(operandA.polyTable[numPoly].length == operandA_face.length){
+				var sameFace = true;
+				for(var numVert = 0; numVert < operandA_face.vertList.length; ++numVert){
+					if(operandA_face.vertList[numVert] != operandA.polyTable[numPoly].vertList[numVert]){
+						sameFace = false;
+						break;
+					}
+				}
+				if(sameFace){
+					removedFace = true;
+					continue;
+				}
+			}
+		}
+		
+		var polyCopy = [];
+		for(var numVert = 0; numVert < operandA.polyTable[numPoly].vertList.length; ++numVert){
+			polyCopy.push(operandA.polyTable[numPoly].vertList[numVert]);
+		}
+		// console.log(polyCopy);
+		newPolyTable.push(polyCopy);
+	}
+	
+	//calculate corrected vertex indices for operandB verts
+	var B_keys = [[]];
+	for(var numKey = 1; numKey < vertTable_B.length; ++numKey){
+		var isMergeVert = false;
+		for(var numVert = 0; numVert < operandB_face.vertList.length; ++numVert){
+			if(numKey == operandB_face.vertList[numVert]){
+				B_keys.push(operandA_face.vertList[reversePairedVerts[numVert]]);
+				isMergeVert = true;
+				--deltaIndex;
+				break;
+			}
+		}
+		if(isMergeVert)
+			continue;
+		B_keys.push(numKey + deltaIndex);
+	}
+	
+	console.log("B_keys: " + B_keys);
+	
+	//add all operandB Polygons to new table except merged one
+	removedFace = false;
+	for(var numPoly = 1; numPoly < operandB.polyTable.length; ++numPoly){
+		if(!removedFace){
+			if(operandB.polyTable[numPoly].length == operandB_face.length){
+				var sameFace = true;
+				for(var numVert = 0; numVert < operandB_face.vertList.length; ++numVert){
+					if(operandB_face.vertList[numVert] != operandB.polyTable[numPoly].vertList[numVert]){
+						sameFace = false;
+						break;
+					}
+				}
+				if(sameFace){
+					removedFace = true;
+					continue;
+				}
+			}
+		}
+		
+		var polyCopy = [];
+		for(var numVert = 0; numVert < operandB.polyTable[numPoly].vertList.length; ++numVert){
+			polyCopy.push(B_keys[operandB.polyTable[numPoly].vertList[numVert]]);
+		}
+		// console.log(polyCopy);
+		newPolyTable.push(polyCopy);
+	}
+	for(var numVert = 0; numVert < vertTable_A.length; ++numVert){
+		console.log(vertTable_A[numVert]);
+	}
+	for(var numPoly = 0; numPoly < newPolyTable.length; ++numPoly){
+		console.log(newPolyTable[numPoly]);
+	}
+	
+	deleteMesh();
+	currentPick = lastPick;
+	deleteMesh();
+	var thisIndex = meshTable.length;
+	addMesh(vertTable_A, newPolyTable);
+	
+	return;
 	
 	//selected polys should
 	//1 .) the angle between the 'normals' of poly A and poly B should be around 180 degrees
@@ -1371,6 +1567,8 @@ function merge() {
 	
 	
 	//2.) The number of vertices on the ajoining faces should be equals
+	
+	
 	
 	
 	
@@ -1423,6 +1621,9 @@ window.addEventListener("keydown", function(event) {
 	}
 	else if (event.keyCode == 46) {
 		deleteMesh();
+	}
+	else if (event.keyCode == 77 && polyMode) {
+		merge();
 	}
 	else if (event.keyCode == 78) {
 		var thisIndex = meshTable.length;
@@ -1744,7 +1945,7 @@ vShader = [
 				//now get poly
 				if (polyMode) {
 					var polyColor = new Vector4D(polyPixelData[4*index], polyPixelData[4 * index + 1], polyPixelData[4*index + 2], polyPixelData[4*index + 3]);
-					
+					//maybe look at this later
 					for (var plyIndex = 1; plyIndex < currentPick.polyTable.length; ++plyIndex) {
 						var tempPlyCol = currentPick.polyTable[plyIndex].colorID.copy();
 						tempPlyCol.scale(255.0);
