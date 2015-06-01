@@ -1120,6 +1120,7 @@ function renderAll() {
 			meshTable[index].renderPP();
 		}
 	}
+	
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
 	for (var index = 0; index < meshTable.length; ++index) {
@@ -1868,26 +1869,15 @@ vShader = [
 	var cylinder = makeCylinder(0.5, 1.0, 20);
 	var cone = makeCone(0.5, 1.0, 20);
 	
-	addMesh(SHARK_COORD, SHARK_POLY);
-	
-	meshTable[0].materialColor = new Vector4D(0.3, 0.3, 0.3, 1.0);
-	meshTable[0].scale(0.009, 0.009, 0.009);
-	meshTable[0].translate(0.4, 0.0, 0.0);
-	meshTable[0].shading = ShaderTypes.SMOOTH;
-	meshTable[0].pushBuffer();
+	addMesh(cube[0], cube[1]);
+	meshTable[0].scale(0.3, 0.3, 0.3);
+	meshTable[0].translate(-0.3, 0.3, 0.0);
 	meshTable[0].setStartState();
 	
-	addMesh(SHARK_COORD, SHARK_POLY);
-	
-	meshTable[1].materialColor = new Vector4D(0.3, 0.3, 0.3, 1.0);
-	meshTable[1].scale(0.009, 0.009, 0.009);
-	meshTable[1].translate(-0.5, -0.5, 0.0);
-	meshTable[1].setStartState();
-	
 	addMesh(cube[0], cube[1]);
-	meshTable[2].scale(0.3, 0.3, 0.3);
-	meshTable[2].translate(-0.3, 0.3, 0.0);
-	meshTable[2].setStartState();
+	meshTable[1].scale(0.3, 0.3, 0.3);
+	meshTable[1].translate(0.3, 0.3, 0.0);
+	meshTable[1].setStartState();
 
 	//disable camera
 	var camFlag = new Float32Array([0.0]);
@@ -1939,22 +1929,21 @@ vShader = [
 			if(thisColor.equals(tempCol)) {
 				lastPick = currentPick;
 				currentPick = meshTable[mshIndex];
-				console.log(currentPick);
-				console.log(lastPick);
 				
 				//now get poly
 				if (polyMode) {
 					var polyColor = new Vector4D(polyPixelData[4*index], polyPixelData[4 * index + 1], polyPixelData[4*index + 2], polyPixelData[4*index + 3]);
+					
 					//maybe look at this later
 					for (var plyIndex = 1; plyIndex < currentPick.polyTable.length; ++plyIndex) {
 						var tempPlyCol = currentPick.polyTable[plyIndex].colorID.copy();
 						tempPlyCol.scale(255.0);
-						tempPlyCol.floor();
+						tempPlyCol.round();
 						
 						if(polyColor.equals(tempPlyCol)) {
 							lastPolyPick = polyPick;
 							polyPick = currentPick.polyTable[plyIndex];
-							console.log(polyPick);
+							console.log(polyPick.vertList);
 							console.log(lastPolyPick);
 						}
 					}
