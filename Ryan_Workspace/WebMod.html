@@ -12,13 +12,45 @@ P3 : Runtime transformations with picking
 <script type="text/javascript" src="linLib.js"></script>
 <script type="text/javascript" src="main.js"></script>
 
+<form>
+<fieldset>
+<legend>Color: </legend> <br>
+<button type="button" onclick="setPickColor()">Set Color</button>
+Red :
+<input id="red" type="range" value="0" min="0" max = 1 step="0.001"/>
+Green : 
+<input id="green" type="range" value="0" min="0" max = 1 step="0.001"/>
+Blue : 
+<input id="blue" type="range" value="0" min="0" max = 1 step="0.001"/>
+</fieldset>
+</form> <br>
+
 <h1>WebMod : Ryan Connors, Joseph Bernay</h1>
 <body>
 <canvas id="gl-canvas" width="800" height="800">>
 Oops ... your browser doesn't support the HTML5 canvas element
-</canvas><br>
-<button onclick="myFunction()">Examine</button> 
-<button onclick="myFunction()">Look Around</button> <br>
+</canvas>
+
+
+<form>
+<fieldset>
+<legend>Primitive Mesh Creation:</legend>
+ <br>
+<button type="button" onclick="cubePrim()">Cube</button>
+<button type="button" onclick="pyramidPrim()">Pyramid</button>
+<button type="button" onclick="spherePrim()">Sphere</button>
+<button type="button" onclick="cylinderPrim()">Cylinder</button>
+<button type="button" onclick="conePrim()">Cone</button>
+<button type="button" onclick="toroidPrim()">Toroid</button></fieldset>
+</form>
+<form>
+<fieldset>
+<legend>Mesh Edit</legend>
+<button type="button" onclick="deleteMesh()">Delete Mesh</button>
+<button type="button" onclick="merge()">Merge</button>
+</fieldset>
+<br>
+</form>
 
 Delete - Delete Selected Mesh <br>
 B - Add Shark Primitive <br>
@@ -31,7 +63,18 @@ E - Rotate on Z <br>
 R - Rotate whever your move your mouse<br>
 Z - Translate along Z <br>
 click and drag to translate <br>
-
-
+<form>
+<legend> Input/Output </legend>
+<fieldset>
+Model Coordinate File : <br>
+<textarea id="coord" rows="4" cols="50">
+</textarea> <br>
+Model Polygon File : <br>
+<textarea id="poly" rows="4" cols="50">
+</textarea>
+<button type="button" onclick="genModFile()">Generate</button>
+<button type="button" onclick="import()">Import</button><br>
+</fieldset>
+</form>
 
 </body><br><br>
