@@ -1552,8 +1552,25 @@ function merge() {
 	currentPick = lastPick;
 	deleteMesh();
 	var thisIndex = meshTable.length;
-	addMesh(vertTable_A, newPolyTable);
 	
+	//convert -back- to object coordinates
+	
+	
+	
+	//PATCH, needs to be refactored into code
+	for ( var index = 1; index < vertTable_A.length; ++index) {
+		vertTable_A[index] = [vertTable_A[index].x, vertTable_A[index].y, vertTable_A[index].z ];
+	}
+	
+	//PATH, needs to be refactored into code
+	for (var index = 0; index < newPolyTable.length; ++index) {
+		newPolyTable[index].unshift("mergedFace");
+	}
+	
+	newPolyTable.unshift([]);
+	
+	addMesh(vertTable_A, newPolyTable);
+	renderAll();
 	return;
 	
 	//selected polys should
