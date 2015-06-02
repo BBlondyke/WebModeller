@@ -1720,6 +1720,155 @@ function rotateX() {
 	}
 }
 
+//GUI Interaction Functions
+function cubePrim() {
+	var thisIndex = meshTable.length;
+	var cube = makeCube(1.0);
+	addMesh(cube[0], cube[1]);
+	meshTable[thisIndex].scale(0.3, 0.3, 0.3);
+	renderAll();
+}
+
+function pyramidPrim() {
+	var thisIndex = meshTable.length;
+	var pyramid = makePyramid(1.0, 1.0);
+	addMesh(pyramid[0], pyramid[1]);
+	meshTable[thisIndex].scale(0.3, 0.3, 0.3);
+	renderAll();	
+}
+
+function spherePrim() {
+	var thisIndex = meshTable.length;
+	var sphere = makeSphere(1.0);
+	addMesh(sphere[0], sphere[1]);
+	meshTable[thisIndex].scale(0.3, 0.3, 0.3);
+	renderAll();		
+}
+
+function cylinderPrim() {
+	var thisIndex = meshTable.length;
+	var cylinder = makeCylinder(0.5, 1.0, 20);
+	addMesh(cylinder[0], cylinder[1]);
+	meshTable[thisIndex].scale(0.3, 0.3, 0.3);
+	renderAll();
+	return;
+}
+
+function conePrim() {
+	var thisIndex = meshTable.length;
+	var cone = makeCone(0.5, 1.0, 20);
+	addMesh(cone[0], cone[1]);
+	meshTable[thisIndex].scale(0.3, 0.3, 0.3);
+	renderAll();	
+}
+
+function toroidPrim() {
+	var thisIndex = meshTable.length;
+	var toroid = makeToroid(1.0, 0.1, 20, 20);
+	addMesh(toroid[0], toroid[1]);
+	meshTable[thisIndex].scale(0.3, 0.3, 0.3);
+	renderAll();		
+}
+
+function setPickColor() {
+	if (currentPick == undefined) {
+		return;
+	}
+	
+	//get color
+	var red    = document.getElementById("red").value;
+	var green = document.getElementById("green").value;
+	var blue   = document.getElementById("blue").value;
+	currentPick.materialColor = new Vector4D(red, green, blue, 1.0);
+	renderAll();
+}
+
+function importModel() {
+	var coord = document.getElementById("coord");
+	var poly   = document.getElementById("poly");
+	var verts = [[]];
+	var polys = [[]];
+	
+	var tempVert = coord.value.split("\n");
+	var tempPolys = poly.value.split("\n");
+	
+	//create vertex array
+	for (var index = 1; index < tempVert.length; ++index) {
+		if(tempVert[index].length == 0) continue;
+		
+		var thisLine = tempVert[index].split(",");
+		verts.push([parseFloat(thisLine[1]), parseFloat(thisLine[2]), parseFloat(thisLine[3])]);
+	}
+	
+	//create poly array
+	for (var index = 1; index < tempPolys.length; ++index) {
+		if(tempPolys[index].length == 0) continue;
+		
+		var thisLine = tempPolys[index].split(" ");
+		
+		polys.push(thisLine);
+	}
+	
+	//scale the model appropriately
+	var thisIndex = meshTable.length;
+	addMesh(verts, polys);
+	
+	if(meshTable[thisIndex].maxX > 1 ||
+		meshTable[thisIndex].maxY > 1 ||
+		meshTable[thisIndex].maxZ > 1) {
+			
+			var sX = 2.0/(meshTable[thisIndex].maxX - meshTable[thisIndex].minX); 
+			var sY = 2.0/(meshTable[thisIndex].maxY - meshTable[thisIndex].minY); 
+			var sZ = 2.0/(meshTable[thisIndex].maxZ - meshTable[thisIndex].minZ); 
+			
+			meshTable[thisIndex].scale(sX, sY, sZ);
+	}
+	
+	meshTable[thisIndex].scale(0.3, 0.3, 0.3);
+	renderAll();
+}
+function genModFile() {
+	if (currentPick == undefined) {
+		return;
+	}
+	
+	console.log("test");
+
+	var coord = document.getElementById("coord");
+	var poly   = document.getElementById("poly");
+	coord.value = (currentPick.vertTable.length - 1).toString();
+	coord.value += "\n";
+	
+	//generate coord file
+	for (var index = 1; index < currentPick.vertTable.length; ++index) {
+		coord.value += index.toString();
+		var x = currentPick.vertTable[index].x;
+		var y = currentPick.vertTable[index].y;
+		var z = currentPick.vertTable[index].z;
+		coord.value += ",";
+		coord.value += x.toString();
+		coord.value += ",";
+		coord.value += y.toString();
+		coord.value += ",";
+		coord.value += z.toString();
+		coord.value += "\n";
+	}
+	
+	//generate poly file
+	poly.value = (currentPick.polyTable.length - 1).toString();
+	poly.value += "\n";
+	
+	for (var index = 1; index < currentPick.polyTable.length; ++index) {
+			poly.value += "temp"
+			for (var pIndex = 0; pIndex < currentPick.polyTable[index].vertList.length; ++pIndex) {
+				poly.value += " ";
+				poly.value += currentPick.polyTable[index].vertList[pIndex];
+			}
+			poly.value += "\n";
+	}
+	
+}
+
 //ONLOAD
 window.onload = function() {
 	for(var sIndex = 0; sIndex < SHARK_POLY.length; ++sIndex) {
