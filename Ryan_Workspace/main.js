@@ -1311,6 +1311,49 @@ function deleteMesh() {
 	renderAll();
 }
 
+function deletePoly() {
+	if(polyPick == undefined) {
+		return;
+	}
+	
+	//delete the currently selected polygon then adjust 
+	//indices
+	
+	var thisIndex = currentPick.polyTable.indexOf(polyPick);
+	var offSet      = 12 * (3 * currentPick.triTable.length);
+	
+	
+	console.log(currentPick.endBufInd);
+	currentPick.polyTable.splice(thisIndex, 1);
+	currentPick.tesselate();
+
+	currentPick.endBufInd = currentPick.startBufInd + 12 * (3 * currentPick.triTable.length);
+	offSet -= (12 * (3 * currentPick.triTable.length));
+	
+	console.log(currentPick.endBufInd);
+	console.log(offSet);
+	
+	//offset the rest of the table to account for this removed data
+	thisIndex = meshTable.indexOf(currentPick) + 1;
+	
+	for (thisIndex; thisIndex < meshTable.length; ++thisIndex) {
+		meshTable[thisIndex].startBufInd -= offSet;
+		meshTable[thisIndex].endBufInd -= offSet;
+	}
+	
+	for (var index = 0; index < meshTable.length; ++index) {
+		meshTable[index].pushBuffer();
+	}
+	
+	renderAll();
+}
+
+//Non-Additive merge alters no geometry and simply consolidates
+//two meshes into one mesh object. Optional
+function naMerge() {
+	
+}
+
 function merge() {
 	//get start stateState
 	var operandA = lastPick;
