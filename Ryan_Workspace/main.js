@@ -1348,10 +1348,16 @@ function deletePoly() {
 	renderAll();
 }
 
-//Non-Additive merge alters no geometry and simply consolidates
-//two meshes into one mesh object. Optional
-function naMerge() {
-	
+function toSmthShad() {
+	currentPick.shading = ShaderTypes.SMOOTH;
+	currentPick.pushBuffer();
+	renderAll();
+}
+
+function toFlatShad() {
+	currentPick.shading = ShaderTypes.FLAT;
+	currentPick.pushBuffer();
+	renderAll();	
 }
 
 function merge() {
@@ -2043,7 +2049,7 @@ vShader = [
 	gl.useProgram( program );
 	
 	//set light position
-	var lightSource = new Vector4D(0.0, 0.0, -10.0, 0.0);
+	var lightSource = new Vector4D(0.0, 0.0, -1.0, 0.0);
 	gl.uniform4fv(gl.getUniformLocation(program, "lightPosition"), lightSource.toFloat32Array());
 	
 	
