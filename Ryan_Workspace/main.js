@@ -1364,7 +1364,7 @@ function deletePoly() {
 	renderAll();
 }
 
-//transPolyonNorm -> interprets mouse input and appropriately scales polygon
+//transPolyonNorm -> interprets mouse input and appropriately translate poly polygon
 function transPolyOnNorm(mouseDelta) {
 	
 	//retrieve normal from data
