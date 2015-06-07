@@ -193,7 +193,7 @@ function Vector(x, y, z) {
 	}
 	
 	this.avgNorm = function() {
-		if (this.normalList.length == 1) {
+		if (this.normalList.length == 0) {
 			console.log("Error : Vector.avgNorm called on empty normal list");
 			return undefined;
 		}
