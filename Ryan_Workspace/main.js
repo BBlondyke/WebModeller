@@ -817,8 +817,8 @@ function Mesh(colorID, begInd) {
 		}
 		else if (input > 0) {
 			this.scaleMat.x.x = this.scaleMat.x.x * 1.05;
-			this.scaleMat.y.y = this.scaleMat.x.y * 1.05;
-			this.scaleMat.z.z = this.scaleMat.x.z * 1.05;
+			this.scaleMat.y.y = this.scaleMat.y.y * 1.05;
+			this.scaleMat.z.z = this.scaleMat.z.z * 1.05;
 		}
 	}
 
@@ -1200,10 +1200,17 @@ function mouseMove(event) {
 		//the not sDown is a neccessary check so 
 		//the shark doesn't automatically start translating when the user removes
 		if (zDown) {
+			
 			deltaPos = {    x:0,
-							y:0,
-							z:(mousePos.x - initialMousePos.x) };
-			currentPick.translateRelative(0.001 * deltaPos.x, 0.001 * deltaPos.y, 0.1 * deltaPos.z );
+								y:0,
+								z:(mousePos.x - initialMousePos.x) };
+								
+			if(!polyMode) {
+				currentPick.translateRelative(0.001 * deltaPos.x, 0.001 * deltaPos.y, 0.1 * deltaPos.z );
+			} 
+			else {
+				transPolyOnNorm(0.001 * deltaPos.z);
+			}
 		}
 		//translation on x/y handling
 		else if (!resolvingEvent){
@@ -1355,6 +1362,90 @@ function deletePoly() {
 	}
 	
 	renderAll();
+}
+
+//transPolyonNorm -> interprets mouse input and appropriately scales polygon
+function transPolyOnNorm(mouseDelta) {
+	
+	//retrieve normal from data
+	var tris = polyPick.tesselate();
+	var polyNormal = new Vector(0.0, 0.0, 0.0);
+	
+	for(var index = 0; index < tris.length; ++index) {
+		polyNormal = polyNormal.add( tris[index].calculateNormal() );
+	}
+	
+	polyNormal.scale(-1.0/tris.length);
+	polyNormal.normalize();
+	
+	
+	//get these keys and translate them in this direction based on input
+	for (var index = 0; index < polyPick.vertList.length; ++index) {
+		var offsetVert;
+		
+		if(mouseDelta > 0.0) {
+			offsetVert = currentPick.vertTable[polyPick.vertList[index]].add(polyNormal.scalarMult(0.1));
+		}
+		else if (mouseDelta < 0.0) {
+			offsetVert = currentPick.vertTable[polyPick.vertList[index]].add(polyNormal.scalarMult(-0.1));
+		}
+		else {
+			return;
+		}
+			
+		currentPick.vertTable[polyPick.vertList[index]] = offsetVert;
+	}
+	currentPick.pushBuffer();
+	renderAll();
+}
+//copies a poly and then allows you to translate that new poly axially.
+function extrudePoly() {
+	
+	//create new poly,
+	//connect it
+	//offset data
+	
+	//get this poly data
+	var verts     = [];
+	var vtxKeys = polyPick.vertList.slice(0);
+	
+	//create copies of the vertices that comprise this poly
+	for(var index = 0; index < vtxKeys.length; ++index) {
+		var thisVert = currentPick.vertTable[vtxKeys[index]].copy();
+		verts.push(thisVert);
+	}
+	
+	//get this poly normal
+	
+	//first get normals from tri's that comprise the original.
+	var tris = polyPick.tesselate();
+	var polyNormal = new Vector(0.0, 0.0, 0.0);
+	
+	for(var index = 0; index < tris.length; ++index) {
+		polyNormal = polyNormal.add( tris[index].calculateNormal() );
+	}
+	
+	polyNormal.scale(-1.0/tris.length);
+	polyNormal.normalize();
+	
+	
+	//translate the points in a direction normal to the average poly normal
+	var offSet = 0.2;
+	offSet = polyNormal.scalarMult(offSet);
+	
+	for (var index = 0; index < verts.length; ++index) {
+		verts[index] = verts[index].add(offSet);
+	}
+	
+	//stitch them into polys
+	console.log("");
+	
+	//offset other data
+	//TODO
+	
+	//renderAll and return
+	
+	
 }
 
 function toSmthShad() {
@@ -1644,45 +1735,6 @@ function merge() {
 	renderAll();
 	return;
 	
-	//selected polys should
-	//1 .) the angle between the 'normals' of poly A and poly B should be around 180 degrees
-	//for now 175 degree to 185 degrees. This is just an arbitrary value, we might want to change this
-	//the poly normals are the average normal of the triangles that comprise them
-	
-	//determine poly normals
-	
-	
-	
-	
-	
-	//2.) The number of vertices on the ajoining faces should be equals
-	
-	
-	
-	
-	
-	//perform merge
-	//convert all coordinates to clip space and use those for calculation
-	//then convert back to world coordinates for storage
-	
-	//for each vertex in polyA.
-	
-		//find closes vert in polyB
-		
-		//perform vector addition for new vertex location
-		
-		//assign this as new vertex location
-		
-	//stitch together new verts
-	
-	
-	//create new mesh object with compounded data from both objects
-	
-	//delete currentPick and lastPick
-	
-	//add this new Mesh to the table
-	
-	//return
 }
 
 //keyboard listening
@@ -1898,6 +1950,11 @@ function importModel() {
 	meshTable[thisIndex].scale(0.3, 0.3, 0.3);
 	renderAll();
 }
+
+function togglePolyMode() {
+	polyMode = !polyMode;
+}
+
 function genModFile() {
 	if (currentPick == undefined) {
 		return;
