@@ -531,7 +531,7 @@ function Polygon(vtxList, mesh) {
 		this.center = this.center.add(this.parentMesh.vertTable[this.vertList[numVert]]);
 		// console.log("Second");
 	}
-	this.center = this.center.scale(1 / this.vertCount())
+	this.center = this.center.scalarMult(1 / this.vertCount())
 
 	//Walk through each  vertex and use them to create tris, ignore the techicalities of what tesselation actually entails
 	this.tesselate = function() {
@@ -561,11 +561,15 @@ function Polygon(vtxList, mesh) {
 			var origVec = this.parentMesh.vertTable[this.vertList[numVert]].copy();
 			var differenceVec = origVec.sub(this.center);
 			if(deltaPos < 0){
-				this.parentMesh.vertTable[this.vertList[numVert]] = differenceVec.scale(0.95) + origVert;
+				this.parentMesh.vertTable[this.vertList[numVert]] = origVec.sub(differenceVec.scalarMult(0.05));
 			}
-			else if (input > 0){
-				this.parentMesh.vertTable[this.vertList[numVert]] = differenceVec.scale(1.05) + origVert;
+			else if (deltaPos > 0){
+				this.parentMesh.vertTable[this.vertList[numVert]] = origVec.add(differenceVec.scalarMult(0.05));
 			}
+			for(var index = 0; index < meshTable.length; ++index){
+				meshTable[index].pushBuffer();
+			}
+			renderAll();
 		}
 	}
 }
@@ -1182,8 +1186,14 @@ function mouseMove(event) {
 		}
 		//scaling handling
 		else if (sDown) {
-			deltaPos = mousePos.x - initialMousePos.x;
-			currentPick.scalePercentage(deltaPos);
+			if(!polyMode){
+				deltaPos = mousePos.x - initialMousePos.x;
+				currentPick.scalePercentage(deltaPos);
+			}
+			else{
+				deltaPos = mousePos.x - initialMousePos.x;
+				polyPick.scale(deltaPos);
+			}
 		}
 		else
 		//translation on Z handling
@@ -1276,36 +1286,35 @@ function deleteMesh() {
 	//if this was the last mesh, there's nothing more to do,
 	if(meshTable.length == 0) {
 		currentVBuffInd = 0;
-		return;
 	}
-	
-	
-	//update all indices
-	//First good data is at the index previous to the removal
-	thisMeshIndex -= 1;
-	
-	//ensure thisMeshIndex is the index to start
-	//adjusting data and make sure it's data is correct.
-	
-	//if zeroth was removed set new zeroth as start point
-	if (thisMeshIndex == -1) {
-		thisMeshIndex = 0;
-		meshTable[thisMeshIndex].startBufInd  = 0;
-		meshTable[thisMeshIndex].endBufInd = meshTable[thisMeshIndex].startBufInd + 12 * (3 * meshTable[thisMeshIndex].triTable.length);
-		currentVBuffInd = meshTable[thisMeshIndex].endBufInd;
-	}
-	
-	//using this starting point
-	//use the linear relationship of data to adjust fields
-	
-	for (var index = thisMeshIndex+1; index < meshTable.length; ++index) {
-		meshTable[thisMeshIndex].startBufInd = currentVBuffInd;
-		meshTable[thisMeshIndex].endBufInd = meshTable[thisMeshIndex].startBufInd + 12 * (3 * meshTable[thisMeshIndex].triTable.length);
-		currentVBuffInd = meshTable[thisMeshIndex].endBufInd;
-	}
-	
-	for (var index = 0; index < meshTable.length; ++index) {
-		meshTable[index].pushBuffer();
+	else{
+		//update all indices
+		//First good data is at the index previous to the removal
+		thisMeshIndex -= 1;
+		
+		//ensure thisMeshIndex is the index to start
+		//adjusting data and make sure it's data is correct.
+		
+		//if zeroth was removed set new zeroth as start point
+		if (thisMeshIndex == -1) {
+			thisMeshIndex = 0;
+			meshTable[thisMeshIndex].startBufInd  = 0;
+			meshTable[thisMeshIndex].endBufInd = meshTable[thisMeshIndex].startBufInd + 12 * (3 * meshTable[thisMeshIndex].triTable.length);
+			currentVBuffInd = meshTable[thisMeshIndex].endBufInd;
+		}
+		
+		//using this starting point
+		//use the linear relationship of data to adjust fields
+		
+		for (var index = thisMeshIndex+1; index < meshTable.length; ++index) {
+			meshTable[thisMeshIndex].startBufInd = currentVBuffInd;
+			meshTable[thisMeshIndex].endBufInd = meshTable[thisMeshIndex].startBufInd + 12 * (3 * meshTable[thisMeshIndex].triTable.length);
+			currentVBuffInd = meshTable[thisMeshIndex].endBufInd;
+		}
+		
+		for (var index = 0; index < meshTable.length; ++index) {
+			meshTable[index].pushBuffer();
+		}
 	}
 	
 	renderAll();
@@ -1597,6 +1606,13 @@ function merge() {
 		console.log(newPolyTable[numPoly]);
 	}
 	
+	var matColor = operandA.materialColor.copy();
+	var transMat = operandA.transMat.copy();
+	var scaleMat = operandA.scaleMat.copy();
+	var rotMatX = operandA.rotMatX.copy();
+	var rotMatY = operandA.rotMatY.copy();
+	var rotMatZ = operandA.rotMatZ.copy();
+	
 	deleteMesh();
 	currentPick = lastPick;
 	deleteMesh();
@@ -1619,6 +1635,12 @@ function merge() {
 	newPolyTable.unshift([]);
 	
 	addMesh(vertTable_A, newPolyTable);
+	meshTable[thisIndex].materialColor = matColor; //new object will just use color of first mesh
+	meshTable[thisIndex].transMat = transMat;
+	meshTable[thisIndex].scaleMat = scaleMat;
+	meshTable[thisIndex].rotMatX = rotMatX;
+	meshTable[thisIndex].rotMatY = rotMatY;
+	meshTable[thisIndex].rotMatZ = rotMatZ;
 	renderAll();
 	return;
 	
