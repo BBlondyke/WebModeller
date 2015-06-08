@@ -4,73 +4,40 @@
 Ryan Connors <br>
 Joseph Bernay <br>
 CMPS 160 : Final Project : WebMod <br>
-Sprint 2015, UCSC <br>
+Spring 2015, UCSC <br>
 <br>
 Scroll down for mini user guides <br><br>
 
 <b>Project Description:</b><br>
-<br>
- <blockquote>WebMod is a webGL-based 3D modelling program capable of supporting small scale pre-visualization models and renders with a lean user interface and render times that achieve linear complexity.</blockquote><br>
-<br>
+<blockquote>WebMod is a webGL-based 3D modeling program capable of supporting small-scale pre-visualization models and renders with a lean user interface and render times that achieve linear complexity.</blockquote><br>
 <br>
 <b>Components and Features:</b><br>
 <br>
+<blockquote><b>Global Data Tables and Linear Rendering Runtime Complexity:</b></blockquote>
+<blockquote>Storing the vertices at the mesh level facilitates easier concatenation of mesh tables during merge operations. All mesh data is stored in a global table. Rendering simply steps through this table. During a normal render, a picking render is created for pixel data storage, then a real render is achieved. If Polygonal Editing Mode is active, a second picking render occurs using distinct colors for each polygon of each mesh. In this manner, both Mesh and Poly-picking are achieved. </blockquote>
 <br>
-<b>Global Data Tables and Linear Rendering Runtime Complexity:</b><br>
+<blockquote><b>Vertex/Triangle/Polygon/Mesh Class Hierarchy:</b></blockquote>
+<blockquote>A family of objects is used to represent graphical objects. At the head of this family is the Mesh Object, which contains all data pertinent to rendering. It contains the color for use in picking, a material color, and a vertex table which all polygon objects reference by key/index. It also contain a data structure of polygon child objects that construct the base mesh object. The polygon class uses a list of vertices referencing key values from the parent mesh object vertex table. Finally, the polygon contains a table of triangle objects that are created through a triangulation algorithm. The triangles will in turn contain a list of keys referencing vertices stored in the Mesh vertex table. Ultimately the triangles are the objects rendered.</blockquote>
 <br>
+<blockquote><b>Primitive Collection:</b></blockquote>
+<blockquote>The modeling program contains buttons that will allow for the creation of rectangular prisms, spheres, pyramids, cylinders, cones, and toroids. Each button will create its corresponding complete mesh and its associated objects at the origin of the scene for manipulation and transformation by the user.</blockquote>
 <br>
-<blockquote>Storing the vertices at the mesh level facilitates easier concatenation of mesh tables during merge operations. All mesh data is stored in a global table. Rendering simply steps through this table. During a normal render, a picking render is created for pixel data storage, then a real render is achieved. If Polygonal Editing Mode is active, a second picking render occurs using distinct colors for each meshes polygons. In this manner, both Mesh and Poly picking are achieved. </blockquote><br>
+<blockquote><b>Runtime Mesh Editing and Vertex Manipulation:</b></blockquote>
+<blockquote> Polygons are selectable and their vertices can be manipulated during the program's execution through the use of polygon scaling and translation operations. The polygon utilizes a color table for picking. Once a polygon has been picked, its face may be scaled, translated axially on its normal, extruded, or deleted. These operations will all alter the vertex world coordinates.</blockquote>
 <br>
+<blockquote><b>Mesh Merging:</b></blockquote>
+<blockquote>Meshes can be merged additively to create an entirely new mesh object. First, the object is checked for tolerances, and then, if those tolerances are met, the merge operation is performed. It will merge the vertex tables and provide additional polygons that join the two faces being merged. Currently this is supported only for selecting two faces and clicking the merge button. The angle of the face normals will cause different merge results. Objects in a state of collision should not be merged. This was one of the only ways to scale the merge problem into one conquerable within the scope of this time frame. </blockquote>
 <br>
-<b>Vertex/Triangle/ Polygon/Mesh class hierarchy:</b><br>
+<blockquote><b>User-selected Shading Using State-based Code Paths:</b></blockquote>
+<blockquote>The user can select the types of shading desired for the scene to undergo by the use of html buttons. These buttons will change GLSL values in the shader code, and these values will be sensed by GLSL control paths. In this manner, the actual final shading will undergo a user-defined process.</blockquote>
 <br>
+<blockquote><b>Anti-aliasing and Post-rasterization Effects:</b></blockquote>
+<blockquote>Time did not permit the implementation of this feature. It was marked as an optional (if time permits) feature in the initial proposal.</blockquote>
 <br>
-<blockquote>A family of objects is used to represent graphical objects. At head of this family is the Mesh Object, which contains all data pertinent to rendering. It contains the color for use in picking, a material color, and a vertex table which all polygon objects reference by key/index. It also contain a data structure of polygon child objects that construct the base mesh object. The polygon class uses a list of vertices referencing key values from the parent mesh object vertex table. Finally, the polygon contains a table of triangle objects that are created through a triangulation algorithm. The triangles will in turn contain a list of keys referencing vertices stored in the Mesh vertex table. Ultimately the triangles are the objects rendered.</blockquote><br>
-<br>
-    <br>
-<br>
-<b>Primitive Collection:</b><br>
-<br>
-<br>
-    <blockquote>The modelling program contains buttons that will allow for the creation of rectangular prisms, spheres, pyramids, cylinders, cones, and toroids. Each button will create its corresponding complete mesh and its associated objects at the origin of the scene for manipulation and transformation by the user.</blockquote><br>
-<br>
-        <br>
-<br>
-<br>
-<b>Runtime Mesh editing and Vertex Manipulation:</b><br>
-<br>
-<br>
-<blockquote> Polygons are selectable and their vertices can be manipulatable during the program's execution through the use of polygon scaling and translation operations. The polygon utilizes a color table for picking. Once a polygon has been picked, its face may be scaled, translated axially on its normal, extruded, or deleted. These operations will all alter the vertex world coordinates.</blockquote><br>
+<blockquote><b>Model Data IO:</b></blockquote>
+<blockquote>Model vertex and poly data can be exported to an html text area where the data can be stored in a notepad and piped back in at a later time. Clicking the generate button will generate the poly/coord files for the currently selected Mesh. Clicking import will accept the data (which is assumed good) from the text area and create a new mesh object. You will need to scale this new mesh appropriately if importing from another object coordinate system.</blockquote>
 <br>
 <br>
-<br>
-<br>
-<br>
-<b>Mesh Merging:</b><br>
-<br>
-<br>
-<blockquote>Meshes can be merged additively to create an entirely new mesh object. First, the object is checked for tolerances, and then, if those tolerances are met, the merge operation is be performed. It will merge the vertex tables and provide additional polygons that join the two faces being merged. Currently this is supported only be selecting two faces and clicking the merge button. The angle of the face normals will cause different merge results. Objects in a state of collision should not be merged. This was one of the only ways to scale the merge problem into one conquerable within the scope of this time frame. </blockquote> <br>
-<br>
-<br>
-<b>User Selected Shading using state-based code paths:</b><br>
-<br>
-<br>
-<blockquote>The user can select the types of shading desired for the scene to undergo by the use of html buttons. These buttons will change GLSL values in the shader code, and these values will be sensed by GLSL control paths. In this manner, the actual final shading will undergo a user-defined process.</blockquote> <br>
-<br>
-<br>
-<b>Anti-aliasing and post-rasterization effects:</b><br>
-<br>
-    <br>
-<br>
- <blockquote>Time did not permit the implementation of this feature. It was marked as an optional (if time permits) feature in the initial proposal.</blockquote><br>
-<br>
-<br>
-<b>Model Data IO:</b><br>
-<br>
-<br>
-<blockquote>Model data can be exported to an html text area where the data can be stored in a notepad and piped back in at a later time. Clicking the generate button will generate the poly/coord files for the currently selected Mesh. Clicking import will accept the data (which is assumed good) from the text area and create a new mesh object. You will need to scale this new mesh appropriately if importing from another object coordinate system.</blockquote><br>
-<br>
-
 <b>Mini Users Guide: </b><br>
 
 <br>
@@ -87,6 +54,6 @@ Scroll down for mini user guides <br><br>
 <br>
 <br>
 <a href="http://moczys.com/2014/01/13/three-js-experiment-3-additive-geometry/"> Additive Geometry Article</a><br> <br>
-The Modo Developers at The Foundry. <br>
+The Modo Developers at The Foundry <br>
 </blockquote>
 </body>
