@@ -1438,13 +1438,91 @@ function extrudePoly() {
 	}
 	
 	//stitch them into polys
+	var offset = currentPick.vertTable.length + 1;
+	var thisPoly;
+	var polys = [];
+	
+	for(var index = 0; index < polyPick.vertList.length; ++index) {
+		thisPoly = [];
+		thisPoly.push(polyPick.vertList[index]);
+		
+		//wrap around case
+		if(index == polyPick.vertList.length - 1) {
+			thisPoly.push(polyPick.vertList[0]);
+		}
+		else {
+			thisPoly.push(polyPick.vertList[index+1]);
+		}
+		
+		//wrap around case
+		if((index + offset + 1) == currentPick.vertTable.length  + verts.length + 1) {
+			thisPoly.push(offset - 1);
+			thisPoly.push(offset + index - 1);
+		}
+		else {
+			thisPoly.push(index + offset);
+			thisPoly.push(index + offset-1);
+		}		
+		
+		polys.push(thisPoly);
+	}
+	
+	//generate cap
+	thisPoly = [];
+	for(var index = offset-1; index < currentPick.vertTable.length + verts.length ; ++index) {
+		thisPoly.push(index);
+	}
+	polys.push(thisPoly);
+	
+	//polys and verts obtained, need to add them to the mesh	
+	currentPick.vertTable = currentPick.vertTable.concat(verts);
+	
+	
+	for (var index = 0; index < polys.length; ++index) {
+		var newPoly = new Polygon(polys[index], currentPick);
+		//set color ID
+		newPoly.colorID = currentPick.currentPolyID.copy();
+		currentPick.incremPolyColor();
+		
+		
+		currentPick.polyTable.push(newPoly);
+	}
+	
+	//then re-triangulate 
+	currentPick.tesselate();
+	currentPick.vertCount = currentPick.triTable.length * 3;
+	
+	//offset data to account for new polys
+	var meshIndex = meshTable.indexOf(currentPick);
+	
+	//ensure this data is good
+	meshTable[meshIndex].endBufInd = meshTable[meshIndex].startBufInd + 12 * (3 * meshTable[meshIndex].triTable.length);
+	currentVBuffInd = meshTable[meshIndex].endBufInd;
+	
+	//now walk through meshTable and update indices
+	++meshIndex;
+	
+	for(meshIndex; meshIndex < meshTable.length; ++meshIndex) {
+		meshTable[meshIndex].startBufInd = currentVBuffInd;
+		meshTable[meshIndex].endBufInd = meshTable[meshIndex].startBufInd + 12 * (3 * meshTable[meshIndex].triTable.length);
+		currentVBuffInd = meshTable[meshIndex].endBufInd;
+	}
+	
+	
+	//finally push all buffers and render
+	for(meshIndex = 0; meshIndex < meshTable.length; ++meshIndex) {
+		meshTable[meshIndex].pushBuffer();
+	}
+	
+	
+	//lastely delete the original polygon. Poor guy just isn't useful anymore.
+	
+	deletePoly();
+	
+	renderAll();
+	
+	
 	console.log("");
-	
-	//offset other data
-	//TODO
-	
-	//renderAll and return
-	
 	
 }
 
