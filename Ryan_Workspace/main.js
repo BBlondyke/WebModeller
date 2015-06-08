@@ -2030,7 +2030,14 @@ function importModel() {
 }
 
 function togglePolyMode() {
+	var button = document.getElementById("polyButton");
 	polyMode = !polyMode;
+	
+	if(polyMode) {
+		button.innerHTML = "Poly Mode : ON";
+	}
+	else
+		button.innerHTML = "Poly Mode : OFF";
 }
 
 function genModFile() {
