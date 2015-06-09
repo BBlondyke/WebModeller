@@ -40,69 +40,71 @@ Scroll down for mini user guides <br><br>
 <br>
 <b>Mini Users Guide: </b><br>
 <blockquote>
- This guide has  been formatted from the Graders Perspective when walking linearly through proposal features. <br><br>
-<b>Data Tables and Linear Rendering Runtime</b><br>
-
- The number of render operations is directly proportional to the complexity of the set of Mesh Vertices N. This in turn is dependant upon the number of triangles that comprise a scene, T. For each triangle added, the number of vertices to process increases by 3. <br>
- <br>
- <b>Vertex/Triangle/Polygon/Mesh Class Family:</b><br>
- 
+This guide has  been formatted from the Graders' Perspective when walking linearly through proposal features. <br><br>
+<b>Data Tables and Linear Rendering Runtime:</b><br>
+<br>
+The number of render operations is directly proportional to the complexity of the set of Mesh Vertices N. This in turn is dependent upon the number of triangles that comprise a scene, T. For each triangle added, the number of vertices to process increases by 3. <br>
+<br>
+<br>
+<b>Vertex/Triangle/Polygon/Mesh Class Family:</b><br>
+<br> 
+The Class Family is detailed below. The Mesh object contains all data required to render itself. On a call to it's render function, all appropriate flags and values are set on the GPU and then rendered appropriately. Each Mesh is comprised of a set of Polygon objects. Each Polygon object breaks itself into a set of Triangle objects and pushes the result to its parent Mesh's triangle table. These Triangles are then pushed to the buffer when the pushBuffer function is called. <br>
+<img src="Pics/UML.png" alt="UML" style="width:730px;height:515px;"><br>
+Fig 1. The Mesh, Polygon, Triangle, Vector Class Interaction:
 	
-	The Class Family is detailed below. The Mesh object contains all data required to render itself. On a call to it's render function, all appropriate flags and values are set on the GPU and then rendered appropriately. Each Mesh is comprised of a set of Polygon Objects. Each Polygon Objects breaks itself into a set of Triangle objects and pushes the result to it's parent meshes triangle table. These triangles are then pushed to the buffer when the pushBuffer function is called. <br>
-	<img src="Pics/UML.png" alt="UML" style="width:730px;height:515px;"><br>
-	Fig 1. The Mesh, Polygon, Triangle, Vector Class Interaction
-	
-	Each object also contains support functions that are used during render calculations. For example, the Triangle object has a function that will return it's normal. The Mesh object is capable of breaking it's own polygons into triangles and pushing it's data to the buffer.
-	
- 
-
- </blockquote>
- 
- <b>Primitive Collection:</b><br>
- The primitive collection consists of a Cube, Pyramid, Sphere, Cylinder, Cone, and Toroid. You can use the Primitive Creation UI under the viewport to create this meshes. These are created with global functions that generate vertex and poly lists uses a standardized object space system. This data is then 'parsed' into a new Mesh object in the same manner it would be read from a file.  <br>
- <video width="800" height="600" controls>
+Each object also contains support functions that are used during render calculations. For example, the Triangle object has a function that will return its normal. The Mesh object is capable of breaking its own Polygons into Triangles and pushing its data to the buffer.
+<br><br><br>
+<b>Primitive Collection:</b><br><br>
+The primitive collection consists of a Cube, Pyramid, Sphere, Cylinder, Cone, and Toroid. You can use the Primitive Creation UI under the viewport to create these meshes. These are created with global functions that generate vertex and poly lists uses a standardized object space system. This data is then 'parsed' into a new Mesh object in the same manner in which it would be read from a file.  <br>
+<br>
+<video width="800" height="600" controls>
    <source src="Videos/Primitives.mp4" type="video/mp4">
  Your browser does not support the video tag. Please use Chrome.
-</video> <br><br>
+</video><br><br><br>
  
- <b>Runtime Mesh Editing and Vertex Manipulation</b><br>
- The meshes can be edited during runtime by selecting the polygon you wish to edit. Ensure PolyMode is active by checking the button in Mesh Edit UI Segment. Then click the polygon you wish to edit. Hold down the S key to scale this polygon, Hold down Z to shift this polygon on its normal axis. Click the Delete Polygon Button to remove this face. Click on the extrude Polygon to generate a new extruded face and geometry. <br>
-  <video width="800" height="600" controls>
+<b>Runtime Mesh Editing and Vertex Manipulation:</b><br><br>
+The meshes can be edited during runtime by selecting the polygon you wish to edit. Ensure PolyMode is active by checking the button in Mesh Edit UI Segment. Then, click the polygon you wish to edit. Hold down the S key to scale this polygon, Hold down Z to shift this polygon on its normal axis. Click the Delete Polygon Button to remove this face. Click on the Extrude Polygon button to generate a new extruded face and corresponding geometry. <br>
+<br>
+<video width="800" height="600" controls>
    <source src="Videos/Polygon.mp4" type="video/mp4">
  Your browser does not support the video tag. Please use Chrome.
-</video> <br><br>
+</video> <br><br><br>
 
-<b>Mesh Merging: </b><br>
-Two Meshes can be merged if the angular differences between their faces does not exceed 5 degrees from anti-parallel. Meshes should not be merged during intersection, this has undefined behavior.  To merge two meshes. Select one Polygon from each Mesh you'd like to additively Merge. Then click the merge button and witness the results. Note that the resultant geometry is dependant upon the state of the initial meshes. The angle between the faces will affect the result. <br>
- <video width="800" height="600" controls>
- <source src="Videos/Merge.mp4" type="video/mp4">
+<b>Mesh Merging: </b><br><br>
+Two Meshes can be merged if the angular difference between their faces does not exceed 5 degrees from anti-parallel. Meshes should not be merged during intersection, this has undefined behavior.  To merge two meshes, select one Polygon from each Mesh you'd like to additively Merge, then click the merge button, and witness the results. Note that the resultant geometry is dependent upon the state of the initial meshes. The angle between the faces will affect the result. <br>
+<br>
+<video width="800" height="600" controls>
+   <source src="Videos/Merge.mp4" type="video/mp4">
+ Your browser does not support the video tag. Please use Chrome.
+</video> <br><br><br>
+ 
+<b>User-selected Shading Using State-based Code Paths:</b><br><br>
+To toggle between shading styles. Scroll down to the shading UI Fragment and click the appropriate shading style. The GLSL has been written with various control paths that allow integration with new lighting systems and camera interaction. In order to stay within the scope of this project, Cameras and Lights were not included in this project. <br>
+<br><br><br>
+
+<b>Mesh Import/Export:</b><br><br>
+To save your edited mesh. Scroll down to the Input/Output UI Fragment. Click once on your mesh and then click on the Generate button to create the coordinate and poly data in the text area provided. To create a new Mesh from data, simply insert the coord/poly text into the respective areas and click Import.
+Note that this data is assumed to be in the format utilized by this program. It is currently unchecked.<br>
+<br><br>
+
+<video width="800" height="600" controls>
+   <source src="Videos/IO.mp4" type="video/mp4">
  Your browser does not support the video tag. Please use Chrome.
 </video> <br><br>
+</blockquote>
  
- <b>User-selected Shading Using State-based Code Paths:</b><br>
- To Toggle between shading styles. Scroll down to the shading UI Fragment and click the appropriate shading style. The GLSL has been written with various control paths that allow integration with new lighting systems and camera interaction. In order to stay within the scope of this project, Cameras and Lights were not included in this project. <br>
- 
- <b>Mesh Import/Export</b><br>
- To save your edited mesh. Scroll down to the Input/Output UI Fragment. Click once on your mesh and then click on the generate button to create the Coordinate and Poly Files in the text area provided. To create a new Mesh from data, simply insert the coord/poly text into the respective areas and click Import.
- Note that this data is assumed to be in the format utilized by this program. It is currently unchecked.<br>
- 
-  <video width="800" height="600" controls>
- <source src="Videos/IO.mp4" type="video/mp4">
- Your browser does not support the video tag. Please use Chrome.
-</video> <br><br>
- 
- <b>Sample Images</b><br>
- <img src="Pics/2_wall.png" alt="UML" style="width:688px;height:608px;"><br>
- <img src="Pics/3_wall.png" alt="UML" style="width:699px;height:627px;"><br>
- <img src="Pics/prims.png" alt="UML" style="width:687px;height:631px;"><br>
- 
- 
- <br>
+<b>Sample Images:</b><br><br>
+<blockquote>
+<img src="Pics/2_wall.png" alt="UML" style="width:688px;height:608px;"><br><br>
+<img src="Pics/3_wall.png" alt="UML" style="width:699px;height:627px;"><br><br>
+<img src="Pics/prims.png" alt="UML" style="width:687px;height:631px;"><br><br>
+</blockquote>
+
+<br>
 <br>
 <br>
 <b>References:</b><br>
 <blockquote>
-<br>
 <a href="http://wiki.blender.org/index.php/Dev:Doc/New_Developer_Info">Blender Developer Wiki</a>
 <br>
 <br>
